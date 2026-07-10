@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { addBazaarEntry } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export function BazaarForm({
 }) {
   const [state, action, pending] = useActionState(addBazaarEntry, undefined);
   const wasPending = useRef(false);
+  const [spentBy, setSpentBy] = useState<string>("");
 
   useEffect(() => {
     if (wasPending.current && !pending && !state?.error) {
@@ -30,12 +31,18 @@ export function BazaarForm({
     wasPending.current = pending;
   }, [pending, state, onSuccess]);
 
+  const spentByMember = members.find((m) => m.id === spentBy);
+
   const form = (
     <form action={action} className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label>Spent by</Label>
-          <Select name="spent_by" required>
+          <Select
+            name="spent_by"
+            required
+            onValueChange={(value: string | null) => setSpentBy(value ?? "")}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Spent by…">
                 {(value: string | null) => {
@@ -66,6 +73,21 @@ export function BazaarForm({
           <Input id="description" name="description" placeholder="Optional" />
         </div>
       </div>
+
+      {spentByMember && (
+        <label className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 text-sm">
+          <input
+            type="checkbox"
+            name="credit_deposit"
+            className="size-4 rounded border-input"
+          />
+          <span>
+            Cost deposit to <span className="font-medium text-foreground">{getDisplayName(spentByMember)}</span>{" "}
+            — credits this amount to their meal deposit
+          </span>
+        </label>
+      )}
+
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" disabled={pending} className="self-start">
         {pending ? "Saving…" : "Add bazaar entry"}

@@ -48,11 +48,9 @@ export async function getMealTotals(supabase: SupabaseClient, monthKey: string) 
 }
 
 /** Per-member meal summary: meals eaten, meal cost, deposit, balance (deposit - cost). */
-export async function getMemberMealSummary(
-  supabase: SupabaseClient,
-  monthKey: string,
-  members: { id: string; first_name: string; last_name: string | null }[]
-) {
+export async function getMemberMealSummary<
+  T extends { id: string; first_name: string; last_name: string | null }
+>(supabase: SupabaseClient, monthKey: string, members: T[]) {
   const { mealRate, mealsByUser, depositsByUser, totalBazaar, totalMeals } = await getMealTotals(
     supabase,
     monthKey

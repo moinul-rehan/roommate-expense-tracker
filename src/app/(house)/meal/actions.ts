@@ -25,20 +25,24 @@ export async function addBazaarEntry(
   const supabase = await createClient();
   const amount = Number(formData.get("amount"));
   const description = String(formData.get("description") ?? "").trim() || null;
-  const entryDate = String(formData.get("entry_date") ?? "") || undefined;
+  const entryDate = String(formData.get("entry_date") ?? "") || new Date().toISOString().slice(0, 10);
   const spentBy = String(formData.get("spent_by") ?? profile.id);
+  const creditDeposit = formData.get("credit_deposit") === "on";
 
+  if (!spentBy) {
+    return { error: "Select who spent." };
+  }
   if (!Number.isFinite(amount) || amount <= 0) {
     return { error: "Enter a valid amount." };
   }
 
-  const { error } = await supabase.from("bazaar_entries").insert({
-    month_key: currentMonthKey(),
-    spent_by: spentBy,
-    amount,
-    description,
-    entry_date: entryDate,
-    created_by: profile.id,
+  const { error } = await supabase.rpc("add_bazaar_entry", {
+    p_month_key: currentMonthKey(),
+    p_spent_by: spentBy,
+    p_amount: amount,
+    p_description: description,
+    p_entry_date: entryDate,
+    p_credit_deposit: creditDeposit,
   });
 
   if (error) {
