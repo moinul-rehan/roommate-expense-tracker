@@ -12,6 +12,10 @@ alter table expenses add constraint expenses_category_check check (
 alter table expenses add column if not exists payment_source text not null default 'member'
   check (payment_source in ('member', 'cottage_balance'));
 
+-- ── Members: extra permission flags (added early — referenced by RLS below) ─
+alter table profiles add column if not exists can_add_bazaar boolean not null default true;
+alter table profiles add column if not exists can_add_meals boolean not null default true;
+
 -- ── cottage_balance_transactions ─────────────────────────────
 create table if not exists cottage_balance_transactions (
   id uuid primary key default gen_random_uuid(),
@@ -234,10 +238,6 @@ create policy "daily_meals_insert_permitted" on daily_meals
 drop policy if exists "carry_ins_select_own_cottage" on utility_carry_ins;
 create policy "carry_ins_select_own_cottage" on utility_carry_ins
   for select to authenticated using (cottage_id = current_cottage_id());
-
--- ── Members: extra permission flags ─────────────────────────
-alter table profiles add column if not exists can_add_bazaar boolean not null default true;
-alter table profiles add column if not exists can_add_meals boolean not null default true;
 
 -- ── Notifications ────────────────────────────────────────────
 create table if not exists notifications (
