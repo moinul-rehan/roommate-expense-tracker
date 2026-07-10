@@ -72,7 +72,7 @@ type MemberRef = { first_name: string; last_name: string | null; avatar_url: str
 export async function getDailyMealRecords(supabase: SupabaseClient, monthKey: string) {
   const { data } = await supabase
     .from("daily_meals")
-    .select("id, meal_date, count, member:user_id(first_name, last_name, avatar_url)")
+    .select("id, meal_date, count, user_id, member:user_id(first_name, last_name, avatar_url)")
     .eq("month_key", monthKey)
     .order("meal_date", { ascending: false });
 
@@ -80,8 +80,39 @@ export async function getDailyMealRecords(supabase: SupabaseClient, monthKey: st
     id: string;
     meal_date: string;
     count: number;
+    user_id: string;
     member: MemberRef;
   }[];
+}
+
+/**
+ * Daily-meal entries pivoted into a date x member grid: one row per date that
+ * has any entries, one column per member, cell = that member's meal count on
+ * that date (0 if none).
+ */
+export function pivotDailyMealsByDate<T extends { id: string; first_name: string; last_name: string | null }>(
+  records: { meal_date: string; count: number; user_id: string }[],
+  members: T[]
+) {
+  const dateMap = new Map<string, Map<string, number>>();
+  for (const r of records) {
+    if (!dateMap.has(r.meal_date)) dateMap.set(r.meal_date, new Map());
+    const byUser = dateMap.get(r.meal_date)!;
+    byUser.set(r.user_id, (byUser.get(r.user_id) ?? 0) + Number(r.count));
+  }
+
+  const dates = Array.from(dateMap.keys()).sort((a, b) => b.localeCompare(a));
+
+  const rows = dates.map((date) => ({
+    date,
+    counts: members.map((m) => dateMap.get(date)?.get(m.id) ?? 0),
+  }));
+
+  const totals = members.map((m) =>
+    records.filter((r) => r.user_id === m.id).reduce((sum, r) => sum + Number(r.count), 0)
+  );
+
+  return { rows, totals };
 }
 
 /** Every meal-deposit entry for the month, newest first, with the member's name. */

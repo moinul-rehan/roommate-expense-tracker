@@ -59,6 +59,41 @@ export async function addBazaarEntry(
 
   revalidatePath("/meal");
   revalidatePath("/dashboard");
+  revalidatePath("/meal/month-details");
+  return undefined;
+}
+
+export async function updateBazaarEntry(
+  _prevState: MealActionState,
+  formData: FormData
+): Promise<MealActionState> {
+  const profile = await getCurrentProfile();
+  if (profile.role !== "super_admin" && !profile.can_add_bazaar) {
+    return { error: "You don't have permission to edit bazaar entries." };
+  }
+
+  const supabase = await createClient();
+  const id = String(formData.get("id") ?? "");
+  const amount = Number(formData.get("amount"));
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const entryDate = String(formData.get("entry_date") ?? "");
+
+  if (!id) return { error: "Missing entry." };
+  if (!Number.isFinite(amount) || amount <= 0) return { error: "Enter a valid amount." };
+  if (!entryDate) return { error: "Pick a date." };
+
+  const { error } = await supabase
+    .from("bazaar_entries")
+    .update({ amount, description, entry_date: entryDate })
+    .eq("id", id);
+
+  if (error) {
+    return { error: "Could not update the bazaar entry." };
+  }
+
+  revalidatePath("/meal");
+  revalidatePath("/dashboard");
+  revalidatePath("/meal/month-details");
   return undefined;
 }
 
@@ -102,6 +137,41 @@ export async function addMealDeposit(
 
   revalidatePath("/meal");
   revalidatePath("/dashboard");
+  revalidatePath("/meal/month-details");
+  return undefined;
+}
+
+export async function updateDeposit(
+  _prevState: MealActionState,
+  formData: FormData
+): Promise<MealActionState> {
+  const profile = await getCurrentProfile();
+  if (profile.role !== "super_admin") {
+    return { error: "Only an admin can edit meal deposits." };
+  }
+
+  const supabase = await createClient();
+  const id = String(formData.get("id") ?? "");
+  const amount = Number(formData.get("amount"));
+  const depositDate = String(formData.get("deposit_date") ?? "");
+  const note = String(formData.get("note") ?? "").trim() || null;
+
+  if (!id) return { error: "Missing entry." };
+  if (!Number.isFinite(amount) || amount <= 0) return { error: "Enter a valid amount." };
+  if (!depositDate) return { error: "Pick a date." };
+
+  const { error } = await supabase
+    .from("meal_deposits")
+    .update({ amount, deposit_date: depositDate, note })
+    .eq("id", id);
+
+  if (error) {
+    return { error: "Could not update the deposit." };
+  }
+
+  revalidatePath("/meal");
+  revalidatePath("/dashboard");
+  revalidatePath("/meal/month-details");
   return undefined;
 }
 
@@ -139,5 +209,50 @@ export async function addDailyMeal(
 
   revalidatePath("/meal");
   revalidatePath("/dashboard");
+  revalidatePath("/meal/month-details");
+  return undefined;
+}
+
+/** Edits every member's meal count for one date at once (Month Details' pivot-row edit). */
+export async function updateDailyMealsForDate(
+  _prevState: MealActionState,
+  formData: FormData
+): Promise<MealActionState> {
+  const profile = await getCurrentProfile();
+  if (profile.role !== "super_admin" && !profile.can_add_meals) {
+    return { error: "You don't have permission to edit meals." };
+  }
+
+  const supabase = await createClient();
+  const mealDate = String(formData.get("meal_date") ?? "");
+  const memberIds = String(formData.get("member_ids") ?? "")
+    .split(",")
+    .filter(Boolean);
+
+  if (!mealDate) return { error: "Missing date." };
+  if (!memberIds.length) return { error: "No members to update." };
+
+  const rows = memberIds.map((userId) => {
+    const count = Number(formData.get(`count_${userId}`) ?? 0);
+    return {
+      month_key: mealDate.slice(0, 7),
+      user_id: userId,
+      meal_date: mealDate,
+      count: Number.isFinite(count) && count >= 0 ? count : 0,
+      created_by: profile.id,
+    };
+  });
+
+  const { error } = await supabase
+    .from("daily_meals")
+    .upsert(rows, { onConflict: "user_id,meal_date" });
+
+  if (error) {
+    return { error: "Could not update meals for this date." };
+  }
+
+  revalidatePath("/meal");
+  revalidatePath("/dashboard");
+  revalidatePath("/meal/month-details");
   return undefined;
 }

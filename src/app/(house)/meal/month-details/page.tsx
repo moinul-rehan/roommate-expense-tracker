@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getDisplayName } from "@/lib/data/dal";
+import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import { currentMonthKey } from "@/lib/data/finance";
 import {
@@ -7,6 +7,7 @@ import {
   getDailyMealRecords,
   getDepositRecords,
   getBazaarRecords,
+  pivotDailyMealsByDate,
 } from "@/lib/data/meal";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { EditMealRowDialog } from "./EditMealRowDialog";
+import { EditDepositDialog } from "./EditDepositDialog";
+import { EditBazaarDialog } from "./EditBazaarDialog";
 
 const VIEWS = [
   { value: "meal", label: "Meal Details" },
@@ -47,17 +51,26 @@ export default async function MealMonthDetailsPage({
   searchParams: Promise<{ month?: string; view?: string }>;
 }) {
   const { month, view } = await searchParams;
+  const profile = await getCurrentProfile();
   const supabase = await createClient();
 
   const recentMonths = recentMealMonthKeys();
   const monthKey = month && recentMonths.includes(month) ? month : recentMonths[0];
   const activeView: ViewValue = VIEWS.some((v) => v.value === view) ? (view as ViewValue) : "meal";
 
-  const [mealRecords, depositRecords, bazaarRecords] = await Promise.all([
+  const canEditMeals = profile.role === "super_admin" || profile.can_add_meals;
+  const canEditBazaar = profile.role === "super_admin" || profile.can_add_bazaar;
+  const canEditDeposits = profile.role === "super_admin";
+
+  const [{ data: members }, mealRecords, depositRecords, bazaarRecords] = await Promise.all([
+    supabase.from("profiles").select("id, first_name, last_name").eq("is_active", true).order("last_name"),
     activeView === "meal" ? getDailyMealRecords(supabase, monthKey) : Promise.resolve([]),
     activeView === "deposit" ? getDepositRecords(supabase, monthKey) : Promise.resolve([]),
     activeView === "cost" ? getBazaarRecords(supabase, monthKey) : Promise.resolve([]),
   ]);
+
+  const memberList = members ?? [];
+  const { rows: pivotRows, totals } = pivotDailyMealsByDate(mealRecords, memberList);
 
   return (
     <div className="flex flex-col gap-6">
@@ -101,30 +114,54 @@ export default async function MealMonthDetailsPage({
       </div>
 
       {activeView === "meal" && (
-        <Card className="p-0">
+        <Card className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Member</TableHead>
-                <TableHead className="text-right">Meal count</TableHead>
+                {memberList.map((m) => (
+                  <TableHead key={m.id} className="text-right">
+                    {getDisplayName(m)}
+                  </TableHead>
+                ))}
+                {canEditMeals && <TableHead className="w-10" />}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mealRecords.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="text-muted-foreground">{r.meal_date}</TableCell>
-                  <TableCell className="text-foreground">
-                    <MemberCell member={r.member} />
-                  </TableCell>
-                  <TableCell className="text-right font-medium">{r.count}</TableCell>
+              {pivotRows.map((row) => (
+                <TableRow key={row.date}>
+                  <TableCell className="text-muted-foreground">{row.date}</TableCell>
+                  {row.counts.map((count, i) => (
+                    <TableCell key={memberList[i].id} className="text-right font-medium">
+                      {count || "—"}
+                    </TableCell>
+                  ))}
+                  {canEditMeals && (
+                    <TableCell className="text-right">
+                      <EditMealRowDialog date={row.date} members={memberList} counts={row.counts} />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
-              {!mealRecords.length && (
+              {!pivotRows.length && (
                 <TableRow>
-                  <TableCell colSpan={3} className="py-6 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={memberList.length + 1 + (canEditMeals ? 1 : 0)}
+                    className="py-6 text-center text-muted-foreground"
+                  >
                     No meal entries for {monthKey} yet.
                   </TableCell>
+                </TableRow>
+              )}
+              {!!pivotRows.length && (
+                <TableRow className="border-t bg-muted/30 font-semibold">
+                  <TableCell className="text-foreground">Total</TableCell>
+                  {totals.map((t, i) => (
+                    <TableCell key={memberList[i].id} className="text-right text-foreground">
+                      {t}
+                    </TableCell>
+                  ))}
+                  {canEditMeals && <TableCell />}
                 </TableRow>
               )}
             </TableBody>
@@ -141,6 +178,7 @@ export default async function MealMonthDetailsPage({
                 <TableHead>Member</TableHead>
                 <TableHead>Note</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
+                {canEditDeposits && <TableHead className="w-10" />}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -152,11 +190,21 @@ export default async function MealMonthDetailsPage({
                   </TableCell>
                   <TableCell className="text-muted-foreground">{r.note ?? "—"}</TableCell>
                   <TableCell className="text-right font-medium">{Number(r.amount).toFixed(2)} tk</TableCell>
+                  {canEditDeposits && (
+                    <TableCell className="text-right">
+                      <EditDepositDialog
+                        id={r.id}
+                        amount={Number(r.amount)}
+                        depositDate={r.deposit_date}
+                        note={r.note}
+                      />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
               {!depositRecords.length && (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                  <TableCell colSpan={canEditDeposits ? 5 : 4} className="py-6 text-center text-muted-foreground">
                     No deposits for {monthKey} yet.
                   </TableCell>
                 </TableRow>
@@ -175,6 +223,7 @@ export default async function MealMonthDetailsPage({
                 <TableHead>Spent by</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
+                {canEditBazaar && <TableHead className="w-10" />}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -186,11 +235,21 @@ export default async function MealMonthDetailsPage({
                   </TableCell>
                   <TableCell className="text-muted-foreground">{r.description ?? "—"}</TableCell>
                   <TableCell className="text-right font-medium">{Number(r.amount).toFixed(2)} tk</TableCell>
+                  {canEditBazaar && (
+                    <TableCell className="text-right">
+                      <EditBazaarDialog
+                        id={r.id}
+                        amount={Number(r.amount)}
+                        entryDate={r.entry_date}
+                        description={r.description}
+                      />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
               {!bazaarRecords.length && (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                  <TableCell colSpan={canEditBazaar ? 5 : 4} className="py-6 text-center text-muted-foreground">
                     No bazaar entries for {monthKey} yet.
                   </TableCell>
                 </TableRow>
