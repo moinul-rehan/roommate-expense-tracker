@@ -9,6 +9,8 @@ import {
 } from "@/lib/data/finance";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VerifiedBadge } from "@/components/verified-badge";
 import {
   Table,
   TableBody,
@@ -57,24 +59,31 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">
-            Welcome, {getDisplayName(profile)}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Here&apos;s where things stand for{" "}
-            {new Date().toLocaleString("en-US", { month: "long", year: "numeric" })}.
-          </p>
+        <div className="flex items-center gap-3">
+          <Avatar size="lg" className="size-12">
+            <AvatarImage src={profile.avatar_url ?? undefined} alt={getDisplayName(profile)} />
+            <AvatarFallback>{profile.first_name[0]?.toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="flex items-center gap-1.5 text-xl font-semibold text-foreground">
+              Welcome, {getDisplayName(profile)}
+              <VerifiedBadge role={profile.role} />
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Here&apos;s where things stand for{" "}
+              {new Date().toLocaleString("en-US", { month: "long", year: "numeric" })}.
+            </p>
+          </div>
         </div>
         {profile.role === "super_admin" && (
           <Card className="w-full sm:w-auto">
             <CardContent className="flex items-center gap-3 py-3">
               <div className="text-sm">
-                <p className="font-medium text-foreground">Growing the house?</p>
-                <p className="text-muted-foreground">Invite a new roommate.</p>
+                <p className="font-medium text-foreground">Growing the Cottage?</p>
+                <p className="text-muted-foreground">Invite a new member.</p>
               </div>
-              <Button size="sm" render={<Link href="/admin/members" />}>
-                Add a roommate
+              <Button size="sm" nativeButton={false} render={<Link href="/settings/members" />}>
+                Add a member
               </Button>
             </CardContent>
           </Card>

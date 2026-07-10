@@ -32,7 +32,7 @@ export async function setRent(
     return { error: "Could not save rent." };
   }
 
-  revalidatePath("/admin/rent");
+  revalidatePath("/settings/rent");
   revalidatePath("/dashboard");
   return undefined;
 }

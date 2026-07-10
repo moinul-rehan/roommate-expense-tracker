@@ -1,23 +1,23 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LoginForm } from "./LoginForm";
+import { SignupForm } from "./SignupForm";
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-muted/40 px-4">
+    <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-muted/40 px-4 py-10">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Cottage</CardTitle>
-          <CardDescription>Sign in with the account your admin created for you.</CardDescription>
+          <CardDescription>Sign up for a new Cottage — you&apos;ll be its admin.</CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm />
+          <SignupForm />
         </CardContent>
       </Card>
       <p className="text-sm text-muted-foreground">
-        Starting a new house?{" "}
-        <Link href="/signup" className="font-medium text-primary hover:underline">
-          Sign up for a new Cottage
+        Already have an account?{" "}
+        <Link href="/login" className="font-medium text-primary hover:underline">
+          Sign in as a Cottage member
         </Link>
       </p>
     </div>

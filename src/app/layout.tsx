@@ -9,8 +9,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "House Expenses",
-  description: "Shared-house expense manager",
+  title: "Cottage",
+  description: "Shared-house expense manager for every Cottage",
 };
 
 export default function RootLayout({

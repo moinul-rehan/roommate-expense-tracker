@@ -44,7 +44,7 @@ export async function updateProfile(
     return { error: "Could not save your profile." };
   }
 
-  revalidatePath("/profile");
+  revalidatePath("/settings/profile");
   revalidatePath("/dashboard");
   revalidatePath("/", "layout");
   return { success: "Profile updated." };
@@ -54,49 +54,6 @@ export async function updateAvatarUrl(avatarUrl: string) {
   await getCurrentProfile();
   const supabase = await createClient();
   await supabase.rpc("update_own_avatar", { p_avatar_url: avatarUrl });
-  revalidatePath("/profile");
+  revalidatePath("/settings/profile");
   revalidatePath("/", "layout");
-}
-
-export type ChangePasswordState = { error?: string; success?: string } | undefined;
-
-export async function changePassword(
-  _prevState: ChangePasswordState,
-  formData: FormData
-): Promise<ChangePasswordState> {
-  const profile = await getCurrentProfile();
-
-  const currentPassword = String(formData.get("current_password") ?? "");
-  const newPassword = String(formData.get("new_password") ?? "");
-  const confirmPassword = String(formData.get("confirm_password") ?? "");
-
-  if (!currentPassword || !newPassword) {
-    return { error: "Fill in both password fields." };
-  }
-  if (newPassword.length < 8) {
-    return { error: "New password must be at least 8 characters." };
-  }
-  if (newPassword !== confirmPassword) {
-    return { error: "New password and confirmation don't match." };
-  }
-  if (!profile.email) {
-    return { error: "No email on file for this account." };
-  }
-
-  const supabase = await createClient();
-
-  const { error: reauthError } = await supabase.auth.signInWithPassword({
-    email: profile.email,
-    password: currentPassword,
-  });
-  if (reauthError) {
-    return { error: "Current password is incorrect." };
-  }
-
-  const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-  if (updateError) {
-    return { error: "Could not update password." };
-  }
-
-  return { success: "Password changed." };
 }

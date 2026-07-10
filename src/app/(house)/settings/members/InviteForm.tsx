@@ -20,7 +20,7 @@ export function InviteForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Invite a roommate</CardTitle>
+        <CardTitle className="text-sm">Invite a Cottage member</CardTitle>
       </CardHeader>
       <CardContent>
         <form action={action} className="flex flex-col gap-4">

@@ -6,12 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { getDisplayName } from "@/lib/data/display-name";
+import { VerifiedBadge } from "@/components/verified-badge";
 
 type Member = {
   id: string;
   first_name: string;
   last_name: string | null;
-  role: string;
+  role: "super_admin" | "member";
   room_label: string | null;
   is_active: boolean;
   can_add_expenses: boolean;
@@ -22,7 +23,12 @@ export function MemberRow({ member }: { member: Member }) {
 
   return (
     <TableRow>
-      <TableCell className="font-medium text-foreground">{getDisplayName(member)}</TableCell>
+      <TableCell className="font-medium text-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          {getDisplayName(member)}
+          <VerifiedBadge role={member.role} />
+        </span>
+      </TableCell>
       <TableCell className="text-muted-foreground">{member.room_label ?? "—"}</TableCell>
       <TableCell className="text-muted-foreground">
         {member.role === "super_admin" ? "Super admin" : "Member"}

@@ -11,7 +11,7 @@ export async function inviteMember(
   _prevState: InviteMemberState,
   formData: FormData
 ): Promise<InviteMemberState> {
-  await requireSuperAdmin();
+  const admin_ = await requireSuperAdmin();
 
   const email = String(formData.get("email") ?? "").trim();
   const firstName = String(formData.get("first_name") ?? "").trim();
@@ -25,7 +25,13 @@ export async function inviteMember(
 
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { first_name: firstName, last_name: lastName || null, role },
+    data: {
+      mode: "join_cottage",
+      cottage_id: admin_.cottage_id,
+      first_name: firstName,
+      last_name: lastName || null,
+      role,
+    },
   });
 
   if (error || !data.user) {
@@ -40,7 +46,7 @@ export async function inviteMember(
       .eq("id", data.user.id);
   }
 
-  revalidatePath("/admin/members");
+  revalidatePath("/settings/members");
   return { success: `Invite sent to ${email}.` };
 }
 
@@ -48,12 +54,12 @@ export async function setMemberActive(userId: string, isActive: boolean) {
   await requireSuperAdmin();
   const supabase = await createClient();
   await supabase.from("profiles").update({ is_active: isActive }).eq("id", userId);
-  revalidatePath("/admin/members");
+  revalidatePath("/settings/members");
 }
 
 export async function setCanAddExpenses(userId: string, canAddExpenses: boolean) {
   await requireSuperAdmin();
   const supabase = await createClient();
   await supabase.from("profiles").update({ can_add_expenses: canAddExpenses }).eq("id", userId);
-  revalidatePath("/admin/members");
+  revalidatePath("/settings/members");
 }

@@ -7,6 +7,7 @@ export { getDisplayName, getFullName } from './display-name'
 
 export type Profile = {
   id: string
+  cottage_id: string
   first_name: string
   last_name: string | null
   email: string | null
@@ -21,7 +22,7 @@ export type Profile = {
 }
 
 const PROFILE_COLUMNS =
-  'id, first_name, last_name, email, role, room_label, is_active, avatar_url, gender, hometown, mobile_number, can_add_expenses'
+  'id, cottage_id, first_name, last_name, email, role, room_label, is_active, avatar_url, gender, hometown, mobile_number, can_add_expenses'
 
 /**
  * Verifies the caller has an active Supabase session and loads their profile
@@ -46,6 +47,11 @@ export const getCurrentProfile = cache(async (): Promise<Profile> => {
     .single()
 
   if (error || !profile) {
+    // Sign out before redirecting: a lingering session with no matching
+    // profile row (or a schema mismatch) would otherwise bounce forever
+    // between the proxy's "authenticated -> /dashboard" and this
+    // "profile missing -> /login" redirects.
+    await supabase.auth.signOut()
     redirect('/login')
   }
 

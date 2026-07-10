@@ -26,7 +26,7 @@ export default async function MembersPage() {
       <div>
         <h1 className="text-xl font-semibold text-foreground">Members</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Invite roommates and manage who has access.
+          Invite Cottage members and manage who has access.
         </p>
       </div>
 

@@ -13,7 +13,7 @@ export function PasswordForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Security</CardTitle>
+        <CardTitle className="text-sm">Change password</CardTitle>
       </CardHeader>
       <CardContent>
         <form action={action} className="flex flex-col gap-4">
