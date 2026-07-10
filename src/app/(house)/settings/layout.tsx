@@ -3,11 +3,7 @@ import { getCurrentProfile } from "@/lib/data/dal";
 import { Button } from "@/components/ui/button";
 
 const memberLinks = [{ href: "/settings/profile", label: "Profile" }];
-const adminLinks = [
-  { href: "/settings/members", label: "Members" },
-  { href: "/settings/rent", label: "Rent" },
-  { href: "/settings/start-new-month", label: "Start New Month" },
-];
+const adminLinks = [{ href: "/settings/rent", label: "Rent" }];
 const trailingLinks = [{ href: "/settings/security", label: "Security" }];
 
 export default async function SettingsLayout({

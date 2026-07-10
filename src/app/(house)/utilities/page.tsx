@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
+import { getCottageBalance } from "@/lib/data/finance";
 import { AddExpenseForm } from "./AddExpenseForm";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -13,9 +14,27 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["servant", "electricity", "internet", "other"] as const;
+const CATEGORIES = [
+  "house_rent",
+  "electricity",
+  "servant",
+  "trash",
+  "internet",
+  "filter_kit",
+  "other",
+] as const;
 
-export default async function ExpensesPage({
+const CATEGORY_LABELS: Record<(typeof CATEGORIES)[number], string> = {
+  house_rent: "House Rent",
+  electricity: "Electricity",
+  servant: "Servant Cost",
+  trash: "Trash Cost",
+  internet: "Internet Cost",
+  filter_kit: "Filter Kit Cost",
+  other: "Other",
+};
+
+export default async function UtilitiesPage({
   searchParams,
 }: {
   searchParams: Promise<{ category?: string }>;
@@ -24,7 +43,7 @@ export default async function ExpensesPage({
   const profile = await getCurrentProfile();
   const supabase = await createClient();
 
-  const [{ data: members }, expensesQuery] = await Promise.all([
+  const [{ data: members }, expensesQuery, cottageBalance] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, first_name, last_name")
@@ -34,7 +53,7 @@ export default async function ExpensesPage({
       let query = supabase
         .from("expenses")
         .select(
-          "id, category, amount, description, expense_date, split_type, payer:paid_by(first_name, last_name)"
+          "id, category, amount, description, expense_date, split_type, payment_source, payer:paid_by(first_name, last_name)"
         )
         .order("expense_date", { ascending: false })
         .limit(50);
@@ -43,6 +62,7 @@ export default async function ExpensesPage({
       }
       return query;
     })(),
+    getCottageBalance(supabase, profile.cottage_id),
   ]);
 
   const expenses = expensesQuery.data ?? [];
@@ -50,11 +70,25 @@ export default async function ExpensesPage({
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Expenses</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Servant, electricity, internet, and other shared costs.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Utilities</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            House rent, electricity, servant, trash, internet, filter kit and other shared costs.
+            Private to the household — not shown in the Meal ledger.
+          </p>
+        </div>
+        <Card className="w-full sm:w-auto">
+          <CardHeader className="pb-0">
+            <CardDescription className="text-xs font-medium tracking-wide uppercase">
+              Cottage Balance
+            </CardDescription>
+            <CardTitle className="text-2xl font-semibold">{cottageBalance.toFixed(2)}</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1 text-xs text-muted-foreground">
+            Shared pool expenses can be paid from
+          </CardContent>
+        </Card>
       </div>
 
       {canAddExpenses ? (
@@ -68,7 +102,7 @@ export default async function ExpensesPage({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-1 text-sm">
           <Link
-            href="/expenses"
+            href="/utilities"
             className={cn(
               "rounded-md px-2.5 py-1",
               !category ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground"
@@ -79,13 +113,13 @@ export default async function ExpensesPage({
           {CATEGORIES.map((c) => (
             <Link
               key={c}
-              href={`/expenses?category=${c}`}
+              href={`/utilities?category=${c}`}
               className={cn(
-                "rounded-md px-2.5 py-1 capitalize",
+                "rounded-md px-2.5 py-1",
                 category === c ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {c}
+              {CATEGORY_LABELS[c]}
             </Link>
           ))}
         </div>
@@ -98,6 +132,7 @@ export default async function ExpensesPage({
                 <TableHead>Category</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Paid by</TableHead>
+                <TableHead>Source</TableHead>
                 <TableHead>Split</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
@@ -108,10 +143,19 @@ export default async function ExpensesPage({
                 return (
                   <TableRow key={e.id}>
                     <TableCell className="text-muted-foreground">{e.expense_date}</TableCell>
-                    <TableCell className="capitalize text-muted-foreground">{e.category}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {CATEGORY_LABELS[e.category as (typeof CATEGORIES)[number]] ?? e.category}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{e.description ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {payer ? getDisplayName(payer) : "—"}
+                      {e.payment_source === "cottage_balance"
+                        ? "Cottage Balance"
+                        : payer
+                          ? getDisplayName(payer)
+                          : "—"}
+                    </TableCell>
+                    <TableCell className="capitalize text-muted-foreground">
+                      {e.payment_source === "cottage_balance" ? "Cottage Balance" : "Member"}
                     </TableCell>
                     <TableCell className="capitalize text-muted-foreground">{e.split_type}</TableCell>
                     <TableCell className="text-right font-medium">
@@ -122,14 +166,24 @@ export default async function ExpensesPage({
               })}
               {!expenses.length && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
-                    No expenses yet.
+                  <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
+                    No utility expenses yet.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </Card>
+      </div>
+
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Link href="/settle-up" className="text-muted-foreground hover:text-foreground underline">
+          Settle up
+        </Link>
+        <span className="text-muted-foreground">·</span>
+        <Link href="/history" className="text-muted-foreground hover:text-foreground underline">
+          History
+        </Link>
       </div>
     </div>
   );

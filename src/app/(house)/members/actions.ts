@@ -46,7 +46,7 @@ export async function inviteMember(
       .eq("id", data.user.id);
   }
 
-  revalidatePath("/settings/members");
+  revalidatePath("/members");
   return { success: `Invite sent to ${email}.` };
 }
 
@@ -54,12 +54,26 @@ export async function setMemberActive(userId: string, isActive: boolean) {
   await requireSuperAdmin();
   const supabase = await createClient();
   await supabase.from("profiles").update({ is_active: isActive }).eq("id", userId);
-  revalidatePath("/settings/members");
+  revalidatePath("/members");
 }
 
 export async function setCanAddExpenses(userId: string, canAddExpenses: boolean) {
   await requireSuperAdmin();
   const supabase = await createClient();
   await supabase.from("profiles").update({ can_add_expenses: canAddExpenses }).eq("id", userId);
-  revalidatePath("/settings/members");
+  revalidatePath("/members");
+}
+
+export async function setCanAddBazaar(userId: string, canAddBazaar: boolean) {
+  await requireSuperAdmin();
+  const supabase = await createClient();
+  await supabase.from("profiles").update({ can_add_bazaar: canAddBazaar }).eq("id", userId);
+  revalidatePath("/members");
+}
+
+export async function setCanAddMeals(userId: string, canAddMeals: boolean) {
+  await requireSuperAdmin();
+  const supabase = await createClient();
+  await supabase.from("profiles").update({ can_add_meals: canAddMeals }).eq("id", userId);
+  revalidatePath("/members");
 }

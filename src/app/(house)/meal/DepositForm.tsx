@@ -1,0 +1,66 @@
+"use client";
+
+import { useActionState } from "react";
+import { addMealDeposit } from "./actions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getDisplayName } from "@/lib/data/display-name";
+
+type Member = { id: string; first_name: string; last_name: string | null };
+
+export function DepositForm({ members }: { members: Member[] }) {
+  const [state, action, pending] = useActionState(addMealDeposit, undefined);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">Record a meal deposit</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form action={action} className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label>Member</Label>
+              <Select name="user_id" required>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Member…">
+                    {(value: string | null) => {
+                      const member = members.find((m) => m.id === value);
+                      return member ? getDisplayName(member) : "Member…";
+                    }}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {members.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {getDisplayName(m)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="amount">Amount</Label>
+              <Input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="deposit_date">Date</Label>
+              <Input id="deposit_date" name="deposit_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="note">Note</Label>
+              <Input id="note" name="note" placeholder="Optional" />
+            </div>
+          </div>
+          {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
+          <Button type="submit" disabled={pending} className="self-start">
+            {pending ? "Saving…" : "Record deposit"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}

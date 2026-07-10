@@ -21,7 +21,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const CATEGORIES = ["servant", "electricity", "internet", "other"] as const;
+const CATEGORIES = [
+  "house_rent",
+  "electricity",
+  "servant",
+  "trash",
+  "internet",
+  "filter_kit",
+  "other",
+] as const;
 
 export default async function HistoryPage({
   searchParams,

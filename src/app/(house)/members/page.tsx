@@ -18,7 +18,9 @@ export default async function MembersPage() {
 
   const { data: members } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, role, room_label, is_active, can_add_expenses")
+    .select(
+      "id, first_name, last_name, role, room_label, is_active, can_add_expenses, can_add_bazaar, can_add_meals"
+    )
     .order("last_name");
 
   return (

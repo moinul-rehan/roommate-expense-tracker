@@ -125,6 +125,19 @@ export async function getAmountOwedToUser(
   return frontedByOthers - receivedTotal;
 }
 
+/** Current Cottage Balance for a cottage (sum of in/out transactions). */
+export async function getCottageBalance(supabase: SupabaseClient, cottageId: string) {
+  const { data } = await supabase
+    .from("cottage_balance_transactions")
+    .select("amount, direction")
+    .eq("cottage_id", cottageId);
+
+  return (data ?? []).reduce(
+    (sum, t) => sum + (t.direction === "in" ? Number(t.amount) : -Number(t.amount)),
+    0
+  );
+}
+
 /** Monthly due per user = rent + expense shares - settlements paid, for the given month. */
 export async function getMonthlyDues(supabase: SupabaseClient, monthKey: string) {
   const [rents, shares, settlements] = await Promise.all([

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { setMemberActive, setCanAddExpenses } from "./actions";
+import { setMemberActive, setCanAddExpenses, setCanAddBazaar, setCanAddMeals } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -16,6 +16,8 @@ type Member = {
   room_label: string | null;
   is_active: boolean;
   can_add_expenses: boolean;
+  can_add_bazaar: boolean;
+  can_add_meals: boolean;
 };
 
 export function MemberRow({ member }: { member: Member }) {
@@ -26,7 +28,12 @@ export function MemberRow({ member }: { member: Member }) {
       <TableCell className="font-medium text-foreground">
         <span className="inline-flex items-center gap-1.5">
           {getDisplayName(member)}
-          <VerifiedBadge role={member.role} />
+          <VerifiedBadge
+            role={member.role}
+            can_add_expenses={member.can_add_expenses}
+            can_add_bazaar={member.can_add_bazaar}
+            can_add_meals={member.can_add_meals}
+          />
         </span>
       </TableCell>
       <TableCell className="text-muted-foreground">{member.room_label ?? "—"}</TableCell>
@@ -39,12 +46,14 @@ export function MemberRow({ member }: { member: Member }) {
         </Badge>
       </TableCell>
       <TableCell>
-        <Badge variant={member.can_add_expenses ? "default" : "outline"}>
-          {member.can_add_expenses ? "Can add expenses" : "No expense access"}
-        </Badge>
+        <div className="flex flex-wrap gap-1">
+          <Badge variant={member.can_add_expenses ? "default" : "outline"}>Utilities</Badge>
+          <Badge variant={member.can_add_bazaar ? "default" : "outline"}>Bazaar</Badge>
+          <Badge variant={member.can_add_meals ? "default" : "outline"}>Meals</Badge>
+        </div>
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -53,7 +62,23 @@ export function MemberRow({ member }: { member: Member }) {
               startTransition(() => setCanAddExpenses(member.id, !member.can_add_expenses))
             }
           >
-            {member.can_add_expenses ? "Revoke expenses" : "Grant expenses"}
+            {member.can_add_expenses ? "Revoke utilities" : "Grant utilities"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={pending || member.role === "super_admin"}
+            onClick={() => startTransition(() => setCanAddBazaar(member.id, !member.can_add_bazaar))}
+          >
+            {member.can_add_bazaar ? "Revoke bazaar" : "Grant bazaar"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={pending || member.role === "super_admin"}
+            onClick={() => startTransition(() => setCanAddMeals(member.id, !member.can_add_meals))}
+          >
+            {member.can_add_meals ? "Revoke meals" : "Grant meals"}
           </Button>
           <Button
             variant="ghost"

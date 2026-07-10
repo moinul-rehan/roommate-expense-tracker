@@ -19,15 +19,19 @@ import { getDisplayName } from "@/lib/data/display-name";
 type Member = { id: string; first_name: string; last_name: string | null };
 
 const CATEGORIES = [
-  { value: "servant", label: "Servant" },
+  { value: "house_rent", label: "House Rent" },
   { value: "electricity", label: "Electricity" },
-  { value: "internet", label: "Internet" },
+  { value: "servant", label: "Servant Cost" },
+  { value: "trash", label: "Trash Cost" },
+  { value: "internet", label: "Internet Cost" },
+  { value: "filter_kit", label: "Filter Kit Cost" },
   { value: "other", label: "Other" },
 ];
 
 export function AddExpenseForm({ members }: { members: Member[] }) {
   const [state, action, pending] = useActionState(addExpense, undefined);
   const [splitType, setSplitType] = useState<"equal" | "custom">("equal");
+  const [paymentSource, setPaymentSource] = useState<"member" | "cottage_balance">("member");
 
   return (
     <Card>
@@ -56,26 +60,28 @@ export function AddExpenseForm({ members }: { members: Member[] }) {
               <Label htmlFor="amount">Amount</Label>
               <Input id="amount" name="amount" type="number" step="0.01" min="0.01" required />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>Paid by</Label>
-              <Select name="paid_by" required>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Paid by…">
-                    {(value: string | null) => {
-                      const member = members.find((m) => m.id === value);
-                      return member ? getDisplayName(member) : "Paid by…";
-                    }}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {members.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {getDisplayName(m)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {paymentSource === "member" && (
+              <div className="flex flex-col gap-1.5">
+                <Label>Paid by</Label>
+                <Select name="paid_by" required>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Paid by…">
+                      {(value: string | null) => {
+                        const member = members.find((m) => m.id === value);
+                        return member ? getDisplayName(member) : "Paid by…";
+                      }}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {getDisplayName(m)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="expense_date">Date</Label>
               <Input
@@ -92,23 +98,42 @@ export function AddExpenseForm({ members }: { members: Member[] }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label>Split</Label>
+            <Label>Payment source</Label>
             <RadioGroup
-              name="split_type"
-              defaultValue="equal"
+              name="payment_source"
+              defaultValue="member"
               className="flex flex-row gap-6"
-              onValueChange={(value) => setSplitType(value as "equal" | "custom")}
+              onValueChange={(value) => setPaymentSource(value as "member" | "cottage_balance")}
             >
               <label className="flex items-center gap-2 text-sm">
-                <RadioGroupItem value="equal" /> Split equally
+                <RadioGroupItem value="member" /> Paid by a member
               </label>
               <label className="flex items-center gap-2 text-sm">
-                <RadioGroupItem value="custom" /> Custom split
+                <RadioGroupItem value="cottage_balance" /> Cottage Balance
               </label>
             </RadioGroup>
           </div>
 
-          {splitType === "custom" && (
+          {paymentSource === "member" && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Split</Label>
+              <RadioGroup
+                name="split_type"
+                defaultValue="equal"
+                className="flex flex-row gap-6"
+                onValueChange={(value) => setSplitType(value as "equal" | "custom")}
+              >
+                <label className="flex items-center gap-2 text-sm">
+                  <RadioGroupItem value="equal" /> Split equally
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <RadioGroupItem value="custom" /> Custom split
+                </label>
+              </RadioGroup>
+            </div>
+          )}
+
+          {paymentSource === "member" && splitType === "custom" && (
             <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/50 p-3 sm:grid-cols-3">
               {members.map((m) => (
                 <div key={m.id} className="flex flex-col gap-1">
