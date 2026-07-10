@@ -46,8 +46,12 @@ export function currentMonthKey() {
 
 type ExpenseSplitRow = { user_id: string; share_amount: number; expenses: { expense_date: string; category: string } | null };
 
-/** Sum of each user's expense_splits share within [start, end). */
-export async function getExpenseSharesForMonth(
+/**
+ * Per-user, per-category expense_splits totals within [start, end) for the
+ * given month. Used both to build the "rent vs other" due split and the
+ * per-member cost breakdown card on the dashboard.
+ */
+export async function getExpenseSharesByCategoryForMonth(
   supabase: SupabaseClient,
   monthKey: string
 ) {
@@ -59,11 +63,43 @@ export async function getExpenseSharesForMonth(
     .gte("expenses.expense_date", start)
     .lt("expenses.expense_date", end);
 
-  const totals = new Map<string, number>();
+  const byUser = new Map<string, Map<string, number>>();
+
   for (const row of (data ?? []) as unknown as ExpenseSplitRow[]) {
-    totals.set(row.user_id, (totals.get(row.user_id) ?? 0) + Number(row.share_amount));
+    const category = row.expenses?.category ?? "other";
+    const amount = Number(row.share_amount);
+    if (!byUser.has(row.user_id)) byUser.set(row.user_id, new Map());
+    const categories = byUser.get(row.user_id)!;
+    categories.set(category, (categories.get(category) ?? 0) + amount);
   }
-  return totals;
+
+  return byUser;
+}
+
+export const UTILITY_CATEGORY_LABELS: Record<string, string> = {
+  house_rent: "House Rent",
+  electricity: "Electricity",
+  servant: "Servant Cost",
+  trash: "Trash Cost",
+  internet: "Internet Cost",
+  filter_kit: "Filter Kit Cost",
+  other: "Other",
+};
+
+/** Category → amount breakdown for one member's utility costs this month. */
+export function getMemberCategoryBreakdown(
+  categoryTotalsByUser: Map<string, Map<string, number>>,
+  userId: string
+) {
+  const categories = categoryTotalsByUser.get(userId);
+  if (!categories) return [];
+  return Array.from(categories.entries())
+    .map(([category, amount]) => ({
+      category,
+      label: UTILITY_CATEGORY_LABELS[category] ?? category,
+      amount,
+    }))
+    .sort((a, b) => b.amount - a.amount);
 }
 
 /** Net settlements paid by each user within [start, end): positive reduces their due. */
@@ -138,20 +174,30 @@ export async function getCottageBalance(supabase: SupabaseClient, cottageId: str
   );
 }
 
-/** Monthly due per user = rent + expense shares - settlements paid, for the given month. */
+/**
+ * Monthly due per user = house_rent utility share + other utility shares -
+ * settlements paid, for the given month. "Rent" here is the member's share of
+ * any House Rent category expense (which utilities/actions.ts auto-populates
+ * from their assigned rent_assignments amount) — not rent_assignments itself,
+ * so it only counts once a House Rent expense has actually been recorded for
+ * the month.
+ */
 export async function getMonthlyDues(supabase: SupabaseClient, monthKey: string) {
-  const [rents, shares, settlements] = await Promise.all([
-    getCurrentRents(supabase),
-    getExpenseSharesForMonth(supabase, monthKey),
+  const [categoryTotals, settlements] = await Promise.all([
+    getExpenseSharesByCategoryForMonth(supabase, monthKey),
     getSettlementsForMonth(supabase, monthKey),
   ]);
 
-  const userIds = new Set([...rents.keys(), ...shares.keys()]);
+  const userIds = new Set([...categoryTotals.keys(), ...settlements.keys()]);
   const dues = new Map<string, { rent: number; expenses: number; paid: number; due: number }>();
 
   for (const userId of userIds) {
-    const rent = rents.get(userId)?.monthly_rent_amount ?? 0;
-    const expenses = shares.get(userId) ?? 0;
+    const categories = categoryTotals.get(userId);
+    const rent = categories?.get("house_rent") ?? 0;
+    let expenses = 0;
+    for (const [category, amount] of categories ?? []) {
+      if (category !== "house_rent") expenses += amount;
+    }
     const paid = settlements.get(userId) ?? 0;
     dues.set(userId, { rent, expenses, paid, due: rent + expenses - paid });
   }

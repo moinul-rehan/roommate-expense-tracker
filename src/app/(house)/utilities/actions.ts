@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import { notifyUsers } from "@/lib/data/notifications";
+import { getCurrentRents } from "@/lib/data/finance";
 
 export type AddExpenseState = { error?: string } | undefined;
 
@@ -30,18 +31,15 @@ export async function addExpense(
   const supabase = await createClient();
 
   const category = String(formData.get("category") ?? "");
-  const amount = Number(formData.get("amount"));
   const description = String(formData.get("description") ?? "").trim() || null;
   const paymentSource = formData.get("payment_source") === "cottage_balance" ? "cottage_balance" : "member";
   const paidBy = paymentSource === "member" ? String(formData.get("paid_by") ?? "") : profile.id;
   const expenseDate = String(formData.get("expense_date") ?? "") || undefined;
   const splitType = formData.get("split_type") === "custom" ? "custom" : "equal";
+  const isHouseRent = category === "house_rent";
 
   if (!CATEGORIES.includes(category as (typeof CATEGORIES)[number])) {
     return { error: "Pick a valid category." };
-  }
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return { error: "Enter a valid amount." };
   }
   if (paymentSource === "member" && !paidBy) {
     return { error: "Select who paid." };
@@ -57,27 +55,48 @@ export async function addExpense(
     return { error: "No active members to split with." };
   }
 
+  let amount: number;
   let shares: { user_id: string; share_amount: number }[] = [];
 
-  if (paymentSource === "member") {
-    if (splitType === "equal") {
-      const base = Math.floor((amount / memberIds.length) * 100) / 100;
-      const remainder = Math.round((amount - base * memberIds.length) * 100) / 100;
-      shares = memberIds.map((id, i) => ({
-        user_id: id,
-        share_amount: i === 0 ? base + remainder : base,
-      }));
-    } else {
-      shares = memberIds
-        .map((id) => ({
-          user_id: id,
-          share_amount: Number(formData.get(`share_${id}`) ?? 0),
-        }))
-        .filter((s) => s.share_amount > 0);
+  if (isHouseRent) {
+    // House Rent is never typed in manually — each member's share is their
+    // currently assigned rent (Settings → Rent), so the ledger stays in sync
+    // with whatever the admin has set there.
+    const rents = await getCurrentRents(supabase);
+    shares = memberIds
+      .map((id) => ({ user_id: id, share_amount: rents.get(id)?.monthly_rent_amount ?? 0 }))
+      .filter((s) => s.share_amount > 0);
+    amount = Math.round(shares.reduce((sum, s) => sum + s.share_amount, 0) * 100) / 100;
 
-      const total = Math.round(shares.reduce((sum, s) => sum + s.share_amount, 0) * 100) / 100;
-      if (Math.abs(total - amount) > 0.01) {
-        return { error: `Custom shares (${total}) must add up to the total amount (${amount}).` };
+    if (amount <= 0) {
+      return { error: "No members have an assigned rent yet — set it under Settings → Rent first." };
+    }
+  } else {
+    amount = Number(formData.get("amount"));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { error: "Enter a valid amount." };
+    }
+
+    if (paymentSource === "member") {
+      if (splitType === "equal") {
+        const base = Math.floor((amount / memberIds.length) * 100) / 100;
+        const remainder = Math.round((amount - base * memberIds.length) * 100) / 100;
+        shares = memberIds.map((id, i) => ({
+          user_id: id,
+          share_amount: i === 0 ? base + remainder : base,
+        }));
+      } else {
+        shares = memberIds
+          .map((id) => ({
+            user_id: id,
+            share_amount: Number(formData.get(`share_${id}`) ?? 0),
+          }))
+          .filter((s) => s.share_amount > 0);
+
+        const total = Math.round(shares.reduce((sum, s) => sum + s.share_amount, 0) * 100) / 100;
+        if (Math.abs(total - amount) > 0.01) {
+          return { error: `Custom shares (${total}) must add up to the total amount (${amount}).` };
+        }
       }
     }
   }
@@ -90,7 +109,7 @@ export async function addExpense(
       description,
       paid_by: paidBy,
       expense_date: expenseDate,
-      split_type: splitType,
+      split_type: isHouseRent ? "custom" : splitType,
       payment_source: paymentSource,
       created_by: profile.id,
     })

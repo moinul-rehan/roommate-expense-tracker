@@ -3,8 +3,8 @@ import { getDisplayName, getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import {
   currentMonthKey,
-  getAmountOwedToUser,
-  getCottageBalance,
+  getExpenseSharesByCategoryForMonth,
+  getMemberCategoryBreakdown,
   getMonthlyDues,
   monthRange,
 } from "@/lib/data/finance";
@@ -43,10 +43,10 @@ export default async function DashboardPage() {
   const monthKey = currentMonthKey();
   const { start, end } = monthRange(monthKey);
 
-  const [dues, owedToYou, recentExpenses, cottageBalance, { data: members }, notifications] =
+  const [dues, categoryTotals, recentExpenses, { data: members }, notifications] =
     await Promise.all([
       getMonthlyDues(supabase, monthKey),
-      getAmountOwedToUser(supabase, profile.id, monthKey),
+      getExpenseSharesByCategoryForMonth(supabase, monthKey),
       supabase
         .from("expenses")
         .select("id, category, amount, description, expense_date, payer:paid_by(first_name, last_name)")
@@ -54,12 +54,13 @@ export default async function DashboardPage() {
         .lt("expense_date", end)
         .order("expense_date", { ascending: false })
         .limit(8),
-      getCottageBalance(supabase, profile.cottage_id),
       supabase.from("profiles").select("id, first_name, last_name").eq("is_active", true).order("last_name"),
       getNotifications(supabase, profile.id, 5),
     ]);
 
   const myDue = dues.get(profile.id) ?? { rent: 0, expenses: 0, paid: 0, due: 0 };
+  const myCostBreakdown = getMemberCategoryBreakdown(categoryTotals, profile.id);
+  const totalToPay = myDue.rent + myDue.expenses;
   const { rows: mealRows, mealRate, totalBazaar, totalMeals } = await getMemberMealSummary(
     supabase,
     monthKey,
@@ -70,20 +71,40 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-8">
       <div>
         <h2 className="mb-3 text-sm font-semibold text-foreground">Utility overview</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <StatCard label="Rent" value={myDue.rent.toFixed(2)} />
-          <StatCard label="Your expense share" value={myDue.expenses.toFixed(2)} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader>
+              <CardDescription className="text-xs font-medium tracking-wide uppercase">
+                Your utility costs
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-1.5 pt-0 text-sm">
+              {myCostBreakdown.map((c) => (
+                <div key={c.category} className="flex justify-between">
+                  <span className="text-muted-foreground">{c.label}</span>
+                  <span className="font-medium text-foreground">{c.amount.toFixed(2)} tk</span>
+                </div>
+              ))}
+              {!myCostBreakdown.length && (
+                <p className="text-muted-foreground">No utility costs yet this month.</p>
+              )}
+            </CardContent>
+          </Card>
           <StatCard
-            label="You owe this month"
-            value={myDue.due.toFixed(2)}
-            hint="Rent + share, minus what you've settled"
+            label="Total to pay"
+            value={`${totalToPay.toFixed(2)} tk`}
+            hint="All utility costs owed this month"
           />
           <StatCard
-            label="Others owe you"
-            value={owedToYou.toFixed(2)}
-            hint="From expenses you fronted"
+            label="Already paid"
+            value={`${myDue.paid.toFixed(2)} tk`}
+            hint="Settled so far this month"
           />
-          <StatCard label="Cottage Balance" value={cottageBalance.toFixed(2)} />
+          <StatCard
+            label="Balance / due"
+            value={`${myDue.due.toFixed(2)} tk`}
+            hint="Total to pay minus already paid"
+          />
         </div>
       </div>
 

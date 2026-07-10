@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import { getCottageBalance } from "@/lib/data/finance";
+import { getCottageBalance, getCurrentRents } from "@/lib/data/finance";
 import { AddExpenseForm } from "./AddExpenseForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -43,7 +43,7 @@ export default async function UtilitiesPage({
   const profile = await getCurrentProfile();
   const supabase = await createClient();
 
-  const [{ data: members }, expensesQuery, cottageBalance] = await Promise.all([
+  const [{ data: members }, expensesQuery, cottageBalance, rents] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, first_name, last_name")
@@ -63,10 +63,15 @@ export default async function UtilitiesPage({
       return query;
     })(),
     getCottageBalance(supabase, profile.cottage_id),
+    getCurrentRents(supabase),
   ]);
 
   const expenses = expensesQuery.data ?? [];
   const canAddExpenses = profile.role === "super_admin" || profile.can_add_expenses;
+  const rentRows = Array.from(rents.entries()).map(([user_id, r]) => ({
+    user_id,
+    monthly_rent_amount: r.monthly_rent_amount,
+  }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -92,7 +97,7 @@ export default async function UtilitiesPage({
       </div>
 
       {canAddExpenses ? (
-        <AddExpenseForm members={members ?? []} />
+        <AddExpenseForm members={members ?? []} rents={rentRows} />
       ) : (
         <Card className="p-4 text-sm text-muted-foreground">
           You don&apos;t have permission to add expenses — ask your admin.
