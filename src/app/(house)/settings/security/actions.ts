@@ -24,14 +24,17 @@ export async function changePassword(
   if (newPassword !== confirmPassword) {
     return { error: "New password and confirmation don't match." };
   }
-  if (!profile.email) {
+  const supabase = await createClient();
+
+  // profiles.email can be stale/empty on older accounts — fall back to the
+  // authenticated session's own email, which is always accurate.
+  const email = profile.email ?? (await supabase.auth.getUser()).data.user?.email ?? null;
+  if (!email) {
     return { error: "No email on file for this account." };
   }
 
-  const supabase = await createClient();
-
   const { error: reauthError } = await supabase.auth.signInWithPassword({
-    email: profile.email,
+    email,
     password: currentPassword,
   });
   if (reauthError) {

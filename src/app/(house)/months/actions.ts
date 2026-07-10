@@ -9,11 +9,15 @@ export type MonthActionState = { error?: string; success?: string } | undefined;
 
 async function verifyPassword(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  email: string | null,
+  profileEmail: string | null,
   password: string
 ) {
-  if (!email) return "No email on file for this account.";
   if (!password) return "Enter your password to confirm.";
+
+  // profiles.email can be stale/empty on older accounts — fall back to the
+  // authenticated session's own email, which is always accurate.
+  const email = profileEmail ?? (await supabase.auth.getUser()).data.user?.email ?? null;
+  if (!email) return "No email on file for this account.";
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return "Incorrect password.";

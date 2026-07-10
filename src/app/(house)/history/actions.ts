@@ -18,11 +18,15 @@ export async function activateMonth(
   const password = String(formData.get("password") ?? "");
 
   if (!monthKey) return { error: "Missing month." };
-  if (!profile.email) return { error: "No email on file for this account." };
   if (!password) return { error: "Enter your password to confirm." };
 
+  // profiles.email can be stale/empty on older accounts — fall back to the
+  // authenticated session's own email, which is always accurate.
+  const email = profile.email ?? (await supabase.auth.getUser()).data.user?.email ?? null;
+  if (!email) return { error: "No email on file for this account." };
+
   const { error: reauthError } = await supabase.auth.signInWithPassword({
-    email: profile.email,
+    email,
     password,
   });
   if (reauthError) return { error: "Incorrect password." };
