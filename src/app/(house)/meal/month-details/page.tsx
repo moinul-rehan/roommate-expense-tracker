@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthKey } from "@/lib/data/finance";
+import { getActiveMonthKey } from "@/lib/data/months";
 import {
-  recentMealMonthKeys,
   getDailyMealRecords,
   getDepositRecords,
   getBazaarRecords,
@@ -48,14 +47,13 @@ function MemberCell({ member }: { member: { first_name: string; last_name: strin
 export default async function MealMonthDetailsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string; view?: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
-  const { month, view } = await searchParams;
+  const { view } = await searchParams;
   const profile = await getCurrentProfile();
   const supabase = await createClient();
 
-  const recentMonths = recentMealMonthKeys();
-  const monthKey = month && recentMonths.includes(month) ? month : recentMonths[0];
+  const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
   const activeView: ViewValue = VIEWS.some((v) => v.value === view) ? (view as ViewValue) : "meal";
 
   const canEditMeals = profile.role === "super_admin" || profile.can_add_meals;
@@ -75,32 +73,17 @@ export default async function MealMonthDetailsPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Month Details</h1>
+        <h1 className="text-xl font-semibold text-foreground">Month Details — {monthKey}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Full meal, deposit and cost records for every member, month by month.
+          Full meal, deposit and cost records for every member in the active month.
         </p>
-      </div>
-
-      <div className="flex flex-wrap gap-1 text-sm">
-        {recentMonths.map((m) => (
-          <Link
-            key={m}
-            href={`/meal/month-details?month=${m}&view=${activeView}`}
-            className={cn(
-              "rounded-md px-2.5 py-1",
-              m === monthKey ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {m === currentMonthKey() ? `${m} (current)` : m}
-          </Link>
-        ))}
       </div>
 
       <div className="inline-flex w-fit gap-1 rounded-lg border p-1">
         {VIEWS.map((v) => (
           <Link
             key={v.value}
-            href={`/meal/month-details?month=${monthKey}&view=${v.value}`}
+            href={`/meal/month-details?view=${v.value}`}
             className={cn(
               "rounded-md px-3 py-1.5 text-sm font-medium",
               activeView === v.value

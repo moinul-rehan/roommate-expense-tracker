@@ -13,11 +13,13 @@ type Member = { id: string; first_name: string; last_name: string | null };
 
 export function MealQuickAddMenu({
   members,
+  defaultDate,
   canAddBazaar,
   canAddMeals,
   canAddDeposit,
 }: {
   members: Member[];
+  defaultDate: string;
   canAddBazaar: boolean;
   canAddMeals: boolean;
   canAddDeposit: boolean;
@@ -63,7 +65,7 @@ export function MealQuickAddMenu({
             <DialogTitle>Add Meal</DialogTitle>
           </DialogHeader>
           <div className="p-4 pt-2">
-            <DailyMealForm members={members} hideCard onSuccess={() => setOpen(null)} />
+            <DailyMealForm members={members} defaultDate={defaultDate} hideCard onSuccess={() => setOpen(null)} />
           </div>
         </DialogContent>
       </Dialog>
@@ -74,7 +76,7 @@ export function MealQuickAddMenu({
             <DialogTitle>Add Meal Deposit</DialogTitle>
           </DialogHeader>
           <div className="p-4 pt-2">
-            <DepositForm members={members} hideCard onSuccess={() => setOpen(null)} />
+            <DepositForm members={members} defaultDate={defaultDate} hideCard onSuccess={() => setOpen(null)} />
           </div>
         </DialogContent>
       </Dialog>
@@ -85,7 +87,7 @@ export function MealQuickAddMenu({
             <DialogTitle>Add Meal Cost</DialogTitle>
           </DialogHeader>
           <div className="p-4 pt-2">
-            <BazaarForm members={members} hideCard onSuccess={() => setOpen(null)} />
+            <BazaarForm members={members} defaultDate={defaultDate} hideCard onSuccess={() => setOpen(null)} />
           </div>
         </DialogContent>
       </Dialog>

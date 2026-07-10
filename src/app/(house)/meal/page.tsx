@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthKey } from "@/lib/data/finance";
-import { recentMealMonthKeys, getMemberMealSummary } from "@/lib/data/meal";
+import { getActiveMonthKey, defaultDateForMonth } from "@/lib/data/months";
+import { getMemberMealSummary } from "@/lib/data/meal";
 import { BazaarForm } from "./BazaarForm";
 import { DepositForm } from "./DepositForm";
 import { DailyMealForm } from "./DailyMealForm";
@@ -17,21 +16,18 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-export default async function MealPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ month?: string }>;
-}) {
-  const { month } = await searchParams;
+export default async function MealPage() {
   const profile = await getCurrentProfile();
   const supabase = await createClient();
 
-  const recentMonths = recentMealMonthKeys();
-  const monthKey = month && recentMonths.includes(month) ? month : recentMonths[0];
+  const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
+  const defaultDate = defaultDateForMonth(monthKey);
 
-  const [{ data: members }] = await Promise.all([
-    supabase.from("profiles").select("id, first_name, last_name").eq("is_active", true).order("last_name"),
-  ]);
+  const { data: members } = await supabase
+    .from("profiles")
+    .select("id, first_name, last_name")
+    .eq("is_active", true)
+    .order("last_name");
 
   const { rows, mealRate, totalBazaar, totalMeals } = await getMemberMealSummary(
     supabase,
@@ -45,26 +41,11 @@ export default async function MealPage({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Meal Ledger</h1>
+        <h1 className="text-xl font-semibold text-foreground">Meal Ledger — {monthKey}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Bazaar spending, deposits and daily meals. Fully transparent to every member, and
           entirely separate from the Utility ledger.
         </p>
-      </div>
-
-      <div className="flex flex-wrap gap-1 text-sm">
-        {recentMonths.map((m) => (
-          <Link
-            key={m}
-            href={`/meal?month=${m}`}
-            className={cn(
-              "rounded-md px-2.5 py-1",
-              m === monthKey ? "bg-accent font-medium text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {m === currentMonthKey() ? `${m} (current)` : m}
-          </Link>
-        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -91,33 +72,31 @@ export default async function MealPage({
         </Card>
       </div>
 
-      {monthKey === currentMonthKey() && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div id="bazaar-form" className="scroll-mt-20">
-            {canAddBazaar ? (
-              <BazaarForm members={members ?? []} />
-            ) : (
-              <Card className="p-4 text-sm text-muted-foreground">
-                You don&apos;t have permission to add bazaar entries.
-              </Card>
-            )}
-          </div>
-          <div id="daily-meal-form" className="scroll-mt-20">
-            {canAddMeals ? (
-              <DailyMealForm members={members ?? []} />
-            ) : (
-              <Card className="p-4 text-sm text-muted-foreground">
-                You don&apos;t have permission to log meals.
-              </Card>
-            )}
-          </div>
-          {profile.role === "super_admin" && (
-            <div id="deposit-form" className="scroll-mt-20">
-              <DepositForm members={members ?? []} />
-            </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div id="bazaar-form" className="scroll-mt-20">
+          {canAddBazaar ? (
+            <BazaarForm members={members ?? []} defaultDate={defaultDate} />
+          ) : (
+            <Card className="p-4 text-sm text-muted-foreground">
+              You don&apos;t have permission to add bazaar entries.
+            </Card>
           )}
         </div>
-      )}
+        <div id="daily-meal-form" className="scroll-mt-20">
+          {canAddMeals ? (
+            <DailyMealForm members={members ?? []} defaultDate={defaultDate} />
+          ) : (
+            <Card className="p-4 text-sm text-muted-foreground">
+              You don&apos;t have permission to log meals.
+            </Card>
+          )}
+        </div>
+        {profile.role === "super_admin" && (
+          <div id="deposit-form" className="scroll-mt-20">
+            <DepositForm members={members ?? []} defaultDate={defaultDate} />
+          </div>
+        )}
+      </div>
 
       <div>
         <h2 className="mb-3 text-sm font-semibold text-foreground">Monthly statement — {monthKey}</h2>

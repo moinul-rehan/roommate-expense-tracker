@@ -16,7 +16,15 @@ import { getDisplayName } from "@/lib/data/display-name";
 
 type Member = { id: string; first_name: string; last_name: string | null };
 
-export function SettleForm({ members, currentUserId }: { members: Member[]; currentUserId: string }) {
+export function SettleForm({
+  members,
+  currentUserId,
+  defaultDate,
+}: {
+  members: Member[];
+  currentUserId: string;
+  defaultDate: string;
+}) {
   const [state, action, pending] = useActionState(recordSettlement, undefined);
 
   return (
@@ -62,7 +70,7 @@ export function SettleForm({ members, currentUserId }: { members: Member[]; curr
               </SelectContent>
             </Select>
             <Input name="amount" type="number" step="0.01" min="0.01" placeholder="Amount" required />
-            <Input name="settled_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+            <Input name="settled_on" type="date" defaultValue={defaultDate} />
             <Input name="note" placeholder="Note (optional)" className="sm:col-span-2" />
           </div>
           {state?.error && <p className="text-sm text-destructive">{state.error}</p>}

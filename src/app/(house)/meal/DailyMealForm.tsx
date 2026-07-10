@@ -13,10 +13,12 @@ type Member = { id: string; first_name: string; last_name: string | null };
 
 export function DailyMealForm({
   members,
+  defaultDate,
   onSuccess,
   hideCard = false,
 }: {
   members: Member[];
+  defaultDate: string;
   onSuccess?: () => void;
   hideCard?: boolean;
 }) {
@@ -55,7 +57,7 @@ export function DailyMealForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="meal_date">Date</Label>
-          <Input id="meal_date" name="meal_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+          <Input id="meal_date" name="meal_date" type="date" defaultValue={defaultDate} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="count">Meal count</Label>

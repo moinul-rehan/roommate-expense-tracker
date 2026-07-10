@@ -12,6 +12,7 @@ import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { logout } from "@/lib/auth-actions";
 import { createClient } from "@/lib/supabase/server";
 import { getUnreadCount } from "@/lib/data/notifications";
+import { getActiveMonthKey, defaultDateForMonth } from "@/lib/data/months";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,10 +47,12 @@ export default async function HouseLayout({
 }) {
   const profile = await getCurrentProfile();
   const supabase = await createClient();
-  const [unreadCount, { data: members }] = await Promise.all([
+  const [unreadCount, { data: members }, activeMonthKey] = await Promise.all([
     getUnreadCount(supabase, profile.id),
     supabase.from("profiles").select("id, first_name, last_name").eq("is_active", true).order("last_name"),
+    getActiveMonthKey(supabase, profile.cottage_id),
   ]);
+  const defaultDate = defaultDateForMonth(activeMonthKey);
 
   return (
     <SidebarProvider className="min-h-0 flex-1">
@@ -75,6 +78,7 @@ export default async function HouseLayout({
                 {link.href === "/meal" && (
                   <MealQuickAddMenu
                     members={members ?? []}
+                    defaultDate={defaultDate}
                     canAddBazaar={profile.role === "super_admin" || profile.can_add_bazaar}
                     canAddMeals={profile.role === "super_admin" || profile.can_add_meals}
                     canAddDeposit={profile.role === "super_admin"}
@@ -128,7 +132,11 @@ export default async function HouseLayout({
             </span>
             <span className="hidden truncate text-xs text-muted-foreground sm:block">
               Here&apos;s where things stand for{" "}
-              {new Date().toLocaleString("en-US", { month: "long", year: "numeric" })}.
+              {new Date(`${activeMonthKey}-01T00:00:00`).toLocaleString("en-US", {
+                month: "long",
+                year: "numeric",
+              })}
+              .
             </span>
           </div>
         </header>

@@ -13,10 +13,12 @@ type Member = { id: string; first_name: string; last_name: string | null };
 
 export function BazaarForm({
   members,
+  defaultDate,
   onSuccess,
   hideCard = false,
 }: {
   members: Member[];
+  defaultDate: string;
   onSuccess?: () => void;
   hideCard?: boolean;
 }) {
@@ -66,7 +68,7 @@ export function BazaarForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="entry_date">Date</Label>
-          <Input id="entry_date" name="entry_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+          <Input id="entry_date" name="entry_date" type="date" defaultValue={defaultDate} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="description">Description</Label>

@@ -39,11 +39,6 @@ export function monthRange(monthKey: string) {
   };
 }
 
-export function currentMonthKey() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
 type ExpenseSplitRow = { user_id: string; share_amount: number; expenses: { expense_date: string; category: string } | null };
 
 /**

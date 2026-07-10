@@ -1,27 +1,5 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { currentMonthKey } from "./finance";
-
-/** Current meal month plus the last two (most recent first). Archived months are excluded. */
-export function recentMealMonthKeys(monthKey = currentMonthKey()): string[] {
-  const [year, month] = monthKey.split("-").map(Number);
-  const keys: string[] = [];
-  for (let i = 0; i < 3; i++) {
-    const d = new Date(Date.UTC(year, month - 1 - i, 1));
-    keys.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
-  }
-  return keys;
-}
-
-export async function getArchivedMealMonths(supabase: SupabaseClient, cottageId: string) {
-  const { data } = await supabase
-    .from("meal_months")
-    .select("month_key, closed_at")
-    .eq("cottage_id", cottageId)
-    .eq("is_archived", true)
-    .order("month_key", { ascending: false });
-  return data ?? [];
-}
 
 export async function getMealTotals(supabase: SupabaseClient, monthKey: string) {
   const [{ data: bazaar }, { data: meals }, { data: deposits }] = await Promise.all([

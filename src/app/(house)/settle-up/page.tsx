@@ -1,5 +1,6 @@
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveMonthKey, defaultDateForMonth } from "@/lib/data/months";
 import { SettleForm } from "./SettleForm";
 import { Card } from "@/components/ui/card";
 import {
@@ -14,6 +15,8 @@ import {
 export default async function SettleUpPage() {
   const profile = await getCurrentProfile();
   const supabase = await createClient();
+  const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
+  const defaultDate = defaultDateForMonth(monthKey);
 
   const [{ data: members }, { data: settlements }] = await Promise.all([
     supabase
@@ -37,7 +40,7 @@ export default async function SettleUpPage() {
         <p className="mt-1 text-sm text-muted-foreground">Record a payment made between roommates.</p>
       </div>
 
-      <SettleForm members={members ?? []} currentUserId={profile.id} />
+      <SettleForm members={members ?? []} currentUserId={profile.id} defaultDate={defaultDate} />
 
       <Card className="p-0">
         <Table>

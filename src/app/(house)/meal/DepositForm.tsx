@@ -13,10 +13,12 @@ type Member = { id: string; first_name: string; last_name: string | null };
 
 export function DepositForm({
   members,
+  defaultDate,
   onSuccess,
   hideCard = false,
 }: {
   members: Member[];
+  defaultDate: string;
   onSuccess?: () => void;
   hideCard?: boolean;
 }) {
@@ -59,7 +61,7 @@ export function DepositForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="deposit_date">Date</Label>
-          <Input id="deposit_date" name="deposit_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+          <Input id="deposit_date" name="deposit_date" type="date" defaultValue={defaultDate} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="note">Note</Label>

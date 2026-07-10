@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import { currentMonthKey } from "@/lib/data/finance";
+import { getActiveMonthKey } from "@/lib/data/months";
 import { notifyUsers } from "@/lib/data/notifications";
 
 export type MealActionState = { error?: string } | undefined;
@@ -36,8 +36,10 @@ export async function addBazaarEntry(
     return { error: "Enter a valid amount." };
   }
 
+  const activeMonthKey = await getActiveMonthKey(supabase, profile.cottage_id);
+
   const { error } = await supabase.rpc("add_bazaar_entry", {
-    p_month_key: currentMonthKey(),
+    p_month_key: activeMonthKey,
     p_spent_by: spentBy,
     p_amount: amount,
     p_description: description,
@@ -115,8 +117,10 @@ export async function addMealDeposit(
   if (!userId) return { error: "Select a member." };
   if (!Number.isFinite(amount) || amount <= 0) return { error: "Enter a valid amount." };
 
+  const activeMonthKey = await getActiveMonthKey(supabase, profile.cottage_id);
+
   const { error } = await supabase.from("meal_deposits").insert({
-    month_key: currentMonthKey(),
+    month_key: activeMonthKey,
     user_id: userId,
     amount,
     deposit_date: depositDate,
@@ -192,9 +196,11 @@ export async function addDailyMeal(
   if (!userId) return { error: "Select a member." };
   if (!Number.isFinite(count) || count < 0) return { error: "Enter a valid meal count." };
 
+  const activeMonthKey = await getActiveMonthKey(supabase, profile.cottage_id);
+
   const { error } = await supabase.from("daily_meals").upsert(
     {
-      month_key: mealDate.slice(0, 7),
+      month_key: activeMonthKey,
       user_id: userId,
       meal_date: mealDate,
       count,
@@ -232,10 +238,12 @@ export async function updateDailyMealsForDate(
   if (!mealDate) return { error: "Missing date." };
   if (!memberIds.length) return { error: "No members to update." };
 
+  const activeMonthKey = await getActiveMonthKey(supabase, profile.cottage_id);
+
   const rows = memberIds.map((userId) => {
     const count = Number(formData.get(`count_${userId}`) ?? 0);
     return {
-      month_key: mealDate.slice(0, 7),
+      month_key: activeMonthKey,
       user_id: userId,
       meal_date: mealDate,
       count: Number.isFinite(count) && count >= 0 ? count : 0,

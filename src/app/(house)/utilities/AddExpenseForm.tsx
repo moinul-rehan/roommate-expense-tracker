@@ -32,9 +32,11 @@ const CATEGORIES = [
 export function AddExpenseForm({
   members,
   rents,
+  defaultDate,
 }: {
   members: Member[];
   rents: RentByMember[];
+  defaultDate: string;
 }) {
   const [state, action, pending] = useActionState(addExpense, undefined);
   const [category, setCategory] = useState<string>("servant");
@@ -133,7 +135,7 @@ export function AddExpenseForm({
                 id="expense_date"
                 name="expense_date"
                 type="date"
-                defaultValue={new Date().toISOString().slice(0, 10)}
+                defaultValue={defaultDate}
               />
             </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2">

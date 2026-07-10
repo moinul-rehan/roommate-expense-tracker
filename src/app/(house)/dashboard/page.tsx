@@ -1,11 +1,11 @@
 import { getDisplayName, getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import {
-  currentMonthKey,
   getExpenseSharesByCategoryForMonth,
   getMemberCategoryBreakdown,
   getMonthlyDues,
 } from "@/lib/data/finance";
+import { getActiveMonthKey } from "@/lib/data/months";
 import { getMemberMealSummary } from "@/lib/data/meal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,7 +30,7 @@ function StatCard({ label, value, hint }: { label: string; value: string; hint?:
 export default async function DashboardPage() {
   const profile = await getCurrentProfile();
   const supabase = await createClient();
-  const monthKey = currentMonthKey();
+  const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
   const [dues, categoryTotals, { data: members }] = await Promise.all([
     getMonthlyDues(supabase, monthKey),
