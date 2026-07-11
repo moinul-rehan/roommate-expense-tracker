@@ -179,7 +179,8 @@ export async function updateDeposit(
   return undefined;
 }
 
-export async function addDailyMeal(
+/** Saves lunch + dinner counts for every member on one date (Add Meal quick form). */
+export async function addDailyMealsForDate(
   _prevState: MealActionState,
   formData: FormData
 ): Promise<MealActionState> {
@@ -189,29 +190,36 @@ export async function addDailyMeal(
   }
 
   const supabase = await createClient();
-  const userId = String(formData.get("user_id") ?? "");
   const mealDate = String(formData.get("meal_date") ?? "") || new Date().toISOString().slice(0, 10);
-  const count = Number(formData.get("count"));
+  const memberIds = String(formData.get("member_ids") ?? "")
+    .split(",")
+    .filter(Boolean);
 
-  if (!userId) return { error: "Select a member." };
-  if (!Number.isFinite(count) || count < 0) return { error: "Enter a valid meal count." };
+  if (!memberIds.length) return { error: "No members to save." };
 
   const activeMonthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
-  const { error } = await supabase.from("daily_meals").upsert(
-    {
-      month_key: activeMonthKey,
-      user_id: userId,
-      meal_date: mealDate,
-      count,
-      created_by: profile.id,
-    },
-    { onConflict: "user_id,meal_date" }
-  );
+  const rows = memberIds
+    .map((userId) => {
+      const lunch = Number(formData.get(`lunch_${userId}`) ?? 0) || 0;
+      const dinner = Number(formData.get(`dinner_${userId}`) ?? 0) || 0;
+      return {
+        month_key: activeMonthKey,
+        user_id: userId,
+        meal_date: mealDate,
+        count: lunch + dinner,
+        created_by: profile.id,
+      };
+    })
+    .filter((row) => row.count > 0);
 
-  if (error) {
-    return { error: "Could not save the meal count." };
-  }
+  if (!rows.length) return { error: "Enter at least one meal count." };
+
+  const { error } = await supabase
+    .from("daily_meals")
+    .upsert(rows, { onConflict: "user_id,meal_date" });
+
+  if (error) return { error: "Could not save the meal counts." };
 
   revalidatePath("/meal");
   revalidatePath("/dashboard");
