@@ -1,6 +1,6 @@
 import { getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import { getMonthHistory } from "@/lib/data/months";
+import { getMonthHistory, formatMonthKey } from "@/lib/data/months";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivateMonthButton } from "./ActivateMonthButton";
 
@@ -26,7 +26,7 @@ export default async function HistoryPage() {
               <CardDescription className="text-xs font-medium tracking-wide uppercase">
                 Locked {m.closedAt ? new Date(m.closedAt).toLocaleDateString() : ""}
               </CardDescription>
-              <CardTitle className="text-xl font-semibold">{m.monthKey}</CardTitle>
+              <CardTitle className="text-xl font-semibold">{formatMonthKey(m.monthKey)}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2">

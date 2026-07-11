@@ -19,11 +19,18 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-4">
+    <div className="flex w-full flex-col gap-5">
       <form action={action} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" required autoComplete="email" />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            className="h-12 rounded-2xl px-4 text-base"
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="password">Password</Label>
@@ -33,10 +40,11 @@ export function LoginForm() {
             type="password"
             required
             autoComplete="current-password"
+            className="h-12 rounded-2xl px-4 text-base"
           />
         </div>
         {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
-        <Button type="submit" disabled={pending} className="mt-2 w-full">
+        <Button type="submit" disabled={pending} className="mt-2 h-12 w-full rounded-full text-base">
           {pending ? "Signing in…" : "Sign in as Cottage member"}
         </Button>
       </form>
@@ -46,11 +54,16 @@ export function LoginForm() {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">Or</span>
+          <span className="bg-background px-2 text-muted-foreground">Or</span>
         </div>
       </div>
 
-      <Button type="button" variant="outline" className="w-full" onClick={handleGoogleLogin}>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-12 w-full rounded-full text-base"
+        onClick={handleGoogleLogin}
+      >
         Continue with Google
       </Button>
     </div>

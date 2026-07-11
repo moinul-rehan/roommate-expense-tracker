@@ -4,13 +4,12 @@ import {
   Zap,
   Users,
   CalendarRange,
-  Bell,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import { getUnreadCount, getNotifications } from "@/lib/data/notifications";
-import { getActiveMonthKey, defaultDateForMonth } from "@/lib/data/months";
+import { getActiveMonthKey, defaultDateForMonth, formatMonthKey } from "@/lib/data/months";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { MealQuickAddMenu } from "./MealQuickAddMenu";
 import { SidebarNavLink } from "./SidebarNavLink";
@@ -27,13 +26,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-const memberLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/meal", label: "Meal", icon: UtensilsCrossed },
+const topLinks = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }];
+const bottomLinks = [
   { href: "/utilities", label: "Utilities", icon: Zap },
   { href: "/members", label: "Members", icon: Users },
   { href: "/months", label: "Months", icon: CalendarRange },
-  { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
 export default async function HouseLayout({
@@ -64,23 +61,27 @@ export default async function HouseLayout({
         </SidebarHeader>
         <SidebarContent className="gap-10 px-3">
           <SidebarMenu className="gap-2.5">
-            {memberLinks.map((link) => (
+            {topLinks.map((link) => (
               <SidebarMenuItem key={link.href}>
-                <SidebarNavLink
-                  href={link.href}
-                  label={link.label}
-                  icon={<link.icon />}
-                  unreadCount={link.href === "/notifications" ? unreadCount : undefined}
-                />
-                {link.href === "/meal" && (
-                  <MealQuickAddMenu
-                    members={members ?? []}
-                    defaultDate={defaultDate}
-                    canAddBazaar={profile.role === "super_admin" || profile.can_add_bazaar}
-                    canAddMeals={profile.role === "super_admin" || profile.can_add_meals}
-                    canAddDeposit={profile.role === "super_admin"}
-                  />
-                )}
+                <SidebarNavLink href={link.href} label={link.label} icon={<link.icon />} />
+              </SidebarMenuItem>
+            ))}
+            <SidebarMenuItem>
+              <div className="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/60 group-data-[collapsible=icon]:justify-center">
+                <UtensilsCrossed className="size-4" />
+                <span className="group-data-[collapsible=icon]:hidden">Meal</span>
+              </div>
+              <MealQuickAddMenu
+                members={members ?? []}
+                defaultDate={defaultDate}
+                canAddBazaar={profile.role === "super_admin" || profile.can_add_bazaar}
+                canAddMeals={profile.role === "super_admin" || profile.can_add_meals}
+                canAddDeposit={profile.role === "super_admin"}
+              />
+            </SidebarMenuItem>
+            {bottomLinks.map((link) => (
+              <SidebarMenuItem key={link.href}>
+                <SidebarNavLink href={link.href} label={link.label} icon={<link.icon />} />
               </SidebarMenuItem>
             ))}
             <SidebarMenuItem>
@@ -102,12 +103,7 @@ export default async function HouseLayout({
               />
             </span>
             <span className="hidden truncate text-sm text-muted-foreground sm:block">
-              Here&apos;s where things stand for{" "}
-              {new Date(`${activeMonthKey}-01T00:00:00`).toLocaleString("en-US", {
-                month: "long",
-                year: "numeric",
-              })}
-              .
+              Here&apos;s where things stand for {formatMonthKey(activeMonthKey)}.
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-2.5">

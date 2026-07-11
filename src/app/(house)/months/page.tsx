@@ -1,6 +1,6 @@
 import { requireSuperAdmin } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveMonthKey, getActiveMonthSummary } from "@/lib/data/months";
+import { getActiveMonthKey, getActiveMonthSummary, formatMonthKey } from "@/lib/data/months";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MonthActionButtons } from "./MonthActionButtons";
@@ -29,7 +29,7 @@ export default async function MonthsPage() {
             </CardDescription>
             <Badge variant="default">Active</Badge>
           </div>
-          <CardTitle className="text-2xl font-semibold">{monthKey}</CardTitle>
+          <CardTitle className="text-2xl font-semibold">{formatMonthKey(monthKey)}</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
           <div>
