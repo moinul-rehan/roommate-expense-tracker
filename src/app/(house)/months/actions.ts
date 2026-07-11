@@ -48,30 +48,33 @@ function revalidateAll() {
   revalidatePath("/utilities");
 }
 
-export async function createNewMonth(
+export async function setActiveMonth(
   _prevState: MonthActionState,
   formData: FormData
 ): Promise<MonthActionState> {
   const profile = await requireSuperAdmin();
   const supabase = await createClient();
 
+  const monthKey = String(formData.get("month_key") ?? "");
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return { error: "Pick a valid month." };
+
   const passwordError = await verifyPassword(supabase, profile.email, String(formData.get("password") ?? ""));
   if (passwordError) return { error: passwordError };
 
-  const { data: nextMonthKey, error } = await supabase.rpc("create_new_month");
+  const { error } = await supabase.rpc("set_active_month", { p_month_key: monthKey });
   if (error) {
-    return { error: "Could not create a new month." };
+    return { error: error.message.includes("has not started") ? error.message : "Could not set the active month." };
   }
 
   await notifyOtherMembers(supabase, profile.cottage_id, profile.id, {
     type: "month_created",
-    title: `New month started: ${nextMonthKey}`,
-    body: "The previous month has been locked and moved to History.",
+    title: `Active month set to ${monthKey}`,
+    body: "The previous active month has been locked and moved to History.",
     link: "/months",
   });
 
   revalidateAll();
-  return { success: `${nextMonthKey} is now the active month. The previous month is locked in History.` };
+  return { success: `${monthKey} is now the active month. The previous month is locked in History.` };
 }
 
 export async function resetUtilityMonth(

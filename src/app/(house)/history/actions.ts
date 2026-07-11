@@ -57,3 +57,38 @@ export async function activateMonth(
   revalidatePath("/utilities");
   return { success: `${monthKey} is now the active month.` };
 }
+
+export type DeleteMonthState = { error?: string; success?: string } | undefined;
+
+export async function deleteMonth(
+  _prevState: DeleteMonthState,
+  formData: FormData
+): Promise<DeleteMonthState> {
+  const profile = await requireSuperAdmin();
+  const supabase = await createClient();
+
+  const monthKey = String(formData.get("month_key") ?? "");
+  const password = String(formData.get("password") ?? "");
+
+  if (!monthKey) return { error: "Missing month." };
+  if (!password) return { error: "Enter your password to confirm." };
+
+  const email = profile.email ?? (await supabase.auth.getUser()).data.user?.email ?? null;
+  if (!email) return { error: "No email on file for this account." };
+
+  const { error: reauthError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (reauthError) return { error: "Incorrect password." };
+
+  const { error } = await supabase.rpc("delete_month", { p_month_key: monthKey });
+  if (error) {
+    return { error: "Could not delete that month." };
+  }
+
+  revalidatePath("/months");
+  revalidatePath("/history");
+  revalidatePath("/dashboard");
+  return { success: `${monthKey} and all its data has been permanently deleted.` };
+}

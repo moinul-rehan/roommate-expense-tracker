@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getMonthHistory, formatMonthKey } from "@/lib/data/months";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ActivateMonthButton } from "./ActivateMonthButton";
+import { DeleteMonthButton } from "./DeleteMonthButton";
 
 export default async function HistoryPage() {
   const profile = await getCurrentProfile();
@@ -14,8 +15,8 @@ export default async function HistoryPage() {
       <div>
         <h1 className="text-xl font-semibold text-foreground">History</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Locked months. Utility history is kept for all months that have been created and
-          locked via the Months page.
+          Locked months. A month lands here once you set a different month active from the
+          Months page.
         </p>
       </div>
 
@@ -47,13 +48,18 @@ export default async function HistoryPage() {
                   <p className="font-medium text-foreground">{m.mealRate.toFixed(2)} tk</p>
                 </div>
               </div>
-              {profile.role === "super_admin" && <ActivateMonthButton monthKey={m.monthKey} />}
+              {profile.role === "super_admin" && (
+                <div className="flex gap-2">
+                  <ActivateMonthButton monthKey={m.monthKey} />
+                  <DeleteMonthButton monthKey={m.monthKey} />
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
         {!months.length && (
           <Card className="p-4 text-sm text-muted-foreground sm:col-span-2 lg:col-span-3">
-            No locked months yet — use Months → Create New Month to start building history.
+            No locked months yet — use Months → Set Active Month to start building history.
           </Card>
         )}
       </div>

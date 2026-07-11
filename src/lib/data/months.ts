@@ -3,6 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getMonthlyDues } from "./finance";
 import { getMealTotals } from "./meal";
 
+export { formatMonthKey } from "@/lib/format-month";
+
 /** The cottage's single authoritative "current month" — drives Dashboard/Meal/Utilities. */
 export async function getActiveMonthKey(supabase: SupabaseClient, cottageId: string) {
   const { data } = await supabase
@@ -17,16 +19,6 @@ export async function getActiveMonthKey(supabase: SupabaseClient, cottageId: str
 export function defaultDateForMonth(monthKey: string): string {
   const today = new Date().toISOString().slice(0, 10);
   return today.slice(0, 7) === monthKey ? today : `${monthKey}-01`;
-}
-
-/** "2026-07" -> "July, 2026" */
-export function formatMonthKey(monthKey: string): string {
-  const [year, month] = monthKey.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, 1)).toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).replace(" ", ", ");
 }
 
 export function nextMonthKey(monthKey: string) {

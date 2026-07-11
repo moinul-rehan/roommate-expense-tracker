@@ -4,6 +4,7 @@ import { getActiveMonthKey, getActiveMonthSummary, formatMonthKey } from "@/lib/
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MonthActionButtons } from "./MonthActionButtons";
+import { SetActiveMonthCard } from "./SetActiveMonthCard";
 
 export default async function MonthsPage() {
   const profile = await requireSuperAdmin();
@@ -16,8 +17,10 @@ export default async function MonthsPage() {
       <div>
         <h1 className="text-xl font-semibold text-foreground">Months</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage the active month. Creating a new month locks this one into History; resetting
-          clears its data without locking it. All three actions require your password to confirm.
+          Manage the active month. Setting a new active month locks this one into History and
+          opens the one you pick (you can&apos;t open a month that hasn&apos;t started yet);
+          resetting clears the active month&apos;s data without locking it. All actions require
+          your password to confirm.
         </p>
       </div>
 
@@ -50,6 +53,8 @@ export default async function MonthsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <SetActiveMonthCard currentMonthKey={monthKey} />
 
       <MonthActionButtons monthKey={monthKey} />
     </div>
