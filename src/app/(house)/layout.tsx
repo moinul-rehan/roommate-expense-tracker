@@ -69,7 +69,7 @@ export default async function HouseLayout({
                 <SidebarNavLink
                   href={link.href}
                   label={link.label}
-                  icon={link.icon}
+                  icon={<link.icon />}
                   unreadCount={link.href === "/notifications" ? unreadCount : undefined}
                 />
                 {link.href === "/meal" && (
@@ -84,7 +84,7 @@ export default async function HouseLayout({
               </SidebarMenuItem>
             ))}
             <SidebarMenuItem>
-              <SidebarNavLink href="/settings/profile" label="Settings" icon={SettingsIcon} />
+              <SidebarNavLink href="/settings/profile" label="Settings" icon={<SettingsIcon />} />
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
