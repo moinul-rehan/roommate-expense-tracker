@@ -93,7 +93,7 @@ export async function addUtilityAdjustment(
     }))
   );
 
-  if (insertError) return { error: "Could not save the adjustment." };
+  if (insertError) return { error: `Could not save the adjustment: ${insertError.message}` };
 
   if (isCottageBalance) {
     const { error: balanceError } = await supabase.from("cottage_balance_transactions").insert({
