@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
-import { addCottageCost } from "./actions";
+import { addCottageCost } from "./utilities/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,11 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "@/components/ui/sidebar";
 import { getDisplayName } from "@/lib/data/display-name";
 
 type Member = { id: string; first_name: string; last_name: string | null };
 
-export function AddCottageCostDialog({
+export function UtilitiesQuickAddMenu({
   members,
   defaultDate,
 }: {
@@ -47,11 +48,13 @@ export function AddCottageCostDialog({
   const selectedMember = members.find((m) => m.id === spentBy);
 
   return (
-    <>
-      <Button variant="outline" onClick={() => setOpen(true)} className="self-start">
-        <Plus />
-        Add cottage cost
-      </Button>
+    <SidebarMenuSub>
+      <SidebarMenuSubItem>
+        <SidebarMenuSubButton onClick={() => setOpen(true)}>
+          <Plus />
+          Add Cottage Cost
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -113,6 +116,6 @@ export function AddCottageCostDialog({
           </form>
         </DialogContent>
       </Dialog>
-    </>
+    </SidebarMenuSub>
   );
 }

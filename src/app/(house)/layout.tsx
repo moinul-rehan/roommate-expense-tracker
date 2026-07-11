@@ -12,6 +12,7 @@ import { getUnreadCount, getNotifications } from "@/lib/data/notifications";
 import { getActiveMonthKey, defaultDateForMonth, formatMonthKey } from "@/lib/data/months";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { MealQuickAddMenu } from "./MealQuickAddMenu";
+import { UtilitiesQuickAddMenu } from "./UtilitiesQuickAddMenu";
 import { SidebarNavLink } from "./SidebarNavLink";
 import { NotificationTray } from "./NotificationTray";
 import { ProfileMenu } from "./ProfileMenu";
@@ -82,6 +83,10 @@ export default async function HouseLayout({
             {bottomLinks.map((link) => (
               <SidebarMenuItem key={link.href}>
                 <SidebarNavLink href={link.href} label={link.label} icon={<link.icon />} />
+                {link.href === "/utilities" &&
+                  (profile.role === "super_admin" || profile.can_add_expenses) && (
+                    <UtilitiesQuickAddMenu members={members ?? []} defaultDate={defaultDate} />
+                  )}
               </SidebarMenuItem>
             ))}
             <SidebarMenuItem>

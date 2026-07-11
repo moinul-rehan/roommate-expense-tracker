@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getCottageBalance, getCurrentRents, monthRange } from "@/lib/data/finance";
 import { getActiveMonthKey, defaultDateForMonth } from "@/lib/data/months";
 import { AddExpenseForm } from "./AddExpenseForm";
-import { AddCottageCostDialog } from "./AddCottageCostDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -105,15 +104,12 @@ export default async function UtilitiesPage({
       </div>
 
       {canAddExpenses ? (
-        <>
-          <AddCottageCostDialog members={members ?? []} defaultDate={defaultDate} />
-          <AddExpenseForm
-            members={members ?? []}
-            rents={rentRows}
-            defaultDate={defaultDate}
-            isSuperAdmin={profile.role === "super_admin"}
-          />
-        </>
+        <AddExpenseForm
+          members={members ?? []}
+          rents={rentRows}
+          defaultDate={defaultDate}
+          isSuperAdmin={profile.role === "super_admin"}
+        />
       ) : (
         <Card className="p-4 text-sm text-muted-foreground">
           You don&apos;t have permission to add expenses — ask your admin.
