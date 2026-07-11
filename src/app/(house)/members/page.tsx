@@ -1,27 +1,23 @@
 import { requireSuperAdmin } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
+import { getUpcomingBazaarDuties } from "@/lib/data/bazaar-duty";
 import { InviteForm } from "./InviteForm";
-import { MemberRow } from "./MemberRow";
+import { MemberCard } from "./MemberCard";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 export default async function MembersPage() {
-  await requireSuperAdmin();
+  const profile = await requireSuperAdmin();
   const supabase = await createClient();
 
-  const { data: members } = await supabase
-    .from("profiles")
-    .select(
-      "id, first_name, last_name, role, room_label, is_active, can_add_expenses, can_add_bazaar, can_add_meals"
-    )
-    .order("last_name");
+  const [{ data: members }, duties] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "id, first_name, last_name, avatar_url, role, room_label, is_active, can_add_expenses, can_add_bazaar, can_add_meals, can_add_deposit"
+      )
+      .order("last_name"),
+    getUpcomingBazaarDuties(supabase, profile.cottage_id),
+  ]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -34,32 +30,16 @@ export default async function MembersPage() {
 
       <InviteForm />
 
-      <Card className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Room</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Permissions</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {members?.map((member) => (
-              <MemberRow key={member.id} member={member} />
-            ))}
-            {!members?.length && (
-              <TableRow>
-                <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
-                  No members yet.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {members?.map((member) => (
+          <MemberCard key={member.id} member={member} duties={duties.get(member.id) ?? []} />
+        ))}
+        {!members?.length && (
+          <Card className="p-4 text-sm text-muted-foreground sm:col-span-2 lg:col-span-3">
+            No members yet.
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

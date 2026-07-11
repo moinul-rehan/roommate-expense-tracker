@@ -104,7 +104,12 @@ export default async function UtilitiesPage({
       </div>
 
       {canAddExpenses ? (
-        <AddExpenseForm members={members ?? []} rents={rentRows} defaultDate={defaultDate} />
+        <AddExpenseForm
+          members={members ?? []}
+          rents={rentRows}
+          defaultDate={defaultDate}
+          isSuperAdmin={profile.role === "super_admin"}
+        />
       ) : (
         <Card className="p-4 text-sm text-muted-foreground">
           You don&apos;t have permission to add expenses — ask your admin.

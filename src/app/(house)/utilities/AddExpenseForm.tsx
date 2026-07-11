@@ -33,16 +33,21 @@ export function AddExpenseForm({
   members,
   rents,
   defaultDate,
+  isSuperAdmin,
 }: {
   members: Member[];
   rents: RentByMember[];
   defaultDate: string;
+  isSuperAdmin: boolean;
 }) {
   const [state, action, pending] = useActionState(addExpense, undefined);
   const [category, setCategory] = useState<string>("servant");
   const [splitType, setSplitType] = useState<"equal" | "custom">("equal");
   const [paymentSource, setPaymentSource] = useState<"member" | "cottage_balance">("member");
   const isHouseRent = category === "house_rent";
+  const visibleCategories = isSuperAdmin
+    ? CATEGORIES
+    : CATEGORIES.filter((c) => c.value !== "house_rent");
 
   const rentByUser = useMemo(() => {
     const map = new Map<string, number>();
@@ -71,7 +76,7 @@ export function AddExpenseForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => (
+                  {visibleCategories.map((c) => (
                     <SelectItem key={c.value} value={c.value}>
                       {c.label}
                     </SelectItem>
@@ -161,7 +166,7 @@ export function AddExpenseForm({
             </RadioGroup>
           </div>
 
-          {isHouseRent ? (
+          {isHouseRent && isSuperAdmin ? (
             <div className="flex flex-col gap-2 rounded-lg bg-muted/50 p-3">
               <p className="text-sm text-muted-foreground">
                 Each member&apos;s share is pulled automatically from their assigned rent under{" "}

@@ -41,6 +41,9 @@ export async function addExpense(
   if (!CATEGORIES.includes(category as (typeof CATEGORIES)[number])) {
     return { error: "Pick a valid category." };
   }
+  if (category === "house_rent" && profile.role !== "super_admin") {
+    return { error: "Only a super admin can add House Rent." };
+  }
   if (paymentSource === "member" && !paidBy) {
     return { error: "Select who paid." };
   }

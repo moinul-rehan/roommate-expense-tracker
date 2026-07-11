@@ -8,6 +8,7 @@ import {
 } from "@/lib/data/finance";
 import { getActiveMonthKey } from "@/lib/data/months";
 import { getMemberMealSummary } from "@/lib/data/meal";
+import { getMyNextBazaarDuty } from "@/lib/data/bazaar-duty";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -52,7 +53,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
-  const [dues, categoryTotals, { data: members }] = await Promise.all([
+  const [dues, categoryTotals, { data: members }, myBazaarDuty] = await Promise.all([
     getMonthlyDues(supabase, monthKey),
     getExpenseSharesByCategoryForMonth(supabase, monthKey),
     supabase
@@ -60,6 +61,7 @@ export default async function DashboardPage() {
       .select("id, first_name, last_name, avatar_url")
       .eq("is_active", true)
       .order("last_name"),
+    getMyNextBazaarDuty(supabase, profile.id),
   ]);
 
   const myDue = dues.get(profile.id) ?? { rent: 0, expenses: 0, paid: 0, due: 0 };
@@ -73,6 +75,21 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      {myBazaarDuty && (
+        <Card className="flex-row items-center gap-4 rounded-2xl border-none bg-[#DDE7F8] p-5">
+          <div className="flex size-[54px] shrink-0 items-center justify-center rounded-2xl bg-white/60 text-[#1358D0]">
+            <ShoppingBasket className="size-6" />
+          </div>
+          <div className="flex min-w-0 flex-col gap-1">
+            <p className="text-sm font-medium text-[#1358D0]">Your bazaar duty</p>
+            <p className="text-lg font-semibold text-foreground">
+              {formatDutyRange(myBazaarDuty.start_date, myBazaarDuty.end_date)}
+            </p>
+            {myBazaarDuty.note && <p className="text-sm text-muted-foreground">{myBazaarDuty.note}</p>}
+          </div>
+        </Card>
+      )}
+
       <div>
         <h2 className="mb-3 text-lg font-semibold text-foreground">Utility overview</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -193,4 +210,10 @@ export default async function DashboardPage() {
       </div>
     </div>
   );
+}
+
+function formatDutyRange(startIso: string, endIso: string) {
+  const fmt = (iso: string) =>
+    new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${fmt(startIso)} – ${fmt(endIso)}`;
 }

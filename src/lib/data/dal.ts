@@ -21,10 +21,11 @@ export type Profile = {
   can_add_expenses: boolean
   can_add_bazaar: boolean
   can_add_meals: boolean
+  can_add_deposit: boolean
 }
 
 const PROFILE_COLUMNS =
-  'id, cottage_id, first_name, last_name, email, role, room_label, is_active, avatar_url, gender, hometown, mobile_number, can_add_expenses, can_add_bazaar, can_add_meals'
+  'id, cottage_id, first_name, last_name, email, role, room_label, is_active, avatar_url, gender, hometown, mobile_number, can_add_expenses, can_add_bazaar, can_add_meals, can_add_deposit'
 
 /**
  * Verifies the caller has an active Supabase session and loads their profile

@@ -76,7 +76,7 @@ export default async function HouseLayout({
                 defaultDate={defaultDate}
                 canAddBazaar={profile.role === "super_admin" || profile.can_add_bazaar}
                 canAddMeals={profile.role === "super_admin" || profile.can_add_meals}
-                canAddDeposit={profile.role === "super_admin"}
+                canAddDeposit={profile.role === "super_admin" || profile.can_add_deposit}
               />
             </SidebarMenuItem>
             {bottomLinks.map((link) => (
