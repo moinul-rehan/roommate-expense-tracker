@@ -10,7 +10,7 @@ export default async function MonthsPage() {
   const profile = await requireSuperAdmin();
   const supabase = await createClient();
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
-  const summary = await getActiveMonthSummary(supabase, monthKey);
+  const summary = await getActiveMonthSummary(supabase, profile.cottage_id, monthKey);
 
   return (
     <div className="flex flex-col gap-8">

@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, FileText } from "lucide-react";
 import { addCottageCost } from "./utilities/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,9 +29,11 @@ type Member = { id: string; first_name: string; last_name: string | null };
 export function UtilitiesQuickAddMenu({
   members,
   defaultDate,
+  isSuperAdmin,
 }: {
   members: Member[];
   defaultDate: string;
+  isSuperAdmin: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [spentBy, setSpentBy] = useState<string>("");
@@ -55,6 +58,14 @@ export function UtilitiesQuickAddMenu({
           Add Cottage Cost
         </SidebarMenuSubButton>
       </SidebarMenuSubItem>
+      {isSuperAdmin && (
+        <SidebarMenuSubItem>
+          <SidebarMenuSubButton render={<Link href="/utilities/statement" />}>
+            <FileText />
+            Generate Utility Statement
+          </SidebarMenuSubButton>
+        </SidebarMenuSubItem>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

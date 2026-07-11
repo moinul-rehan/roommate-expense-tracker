@@ -85,7 +85,11 @@ export default async function HouseLayout({
                 <SidebarNavLink href={link.href} label={link.label} icon={<link.icon />} />
                 {link.href === "/utilities" &&
                   (profile.role === "super_admin" || profile.can_add_expenses) && (
-                    <UtilitiesQuickAddMenu members={members ?? []} defaultDate={defaultDate} />
+                    <UtilitiesQuickAddMenu
+                      members={members ?? []}
+                      defaultDate={defaultDate}
+                      isSuperAdmin={profile.role === "super_admin"}
+                    />
                   )}
               </SidebarMenuItem>
             ))}

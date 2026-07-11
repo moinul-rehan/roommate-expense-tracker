@@ -27,6 +27,12 @@ export function nextMonthKey(monthKey: string) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+export function previousMonthKey(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const d = new Date(Date.UTC(year, month - 2, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
 export type MonthSummary = {
   monthKey: string;
   closedAt: string | null;
@@ -36,9 +42,13 @@ export type MonthSummary = {
   mealRate: number;
 };
 
-async function getMonthSummary(supabase: SupabaseClient, monthKey: string): Promise<Omit<MonthSummary, "monthKey" | "closedAt">> {
+async function getMonthSummary(
+  supabase: SupabaseClient,
+  cottageId: string,
+  monthKey: string
+): Promise<Omit<MonthSummary, "monthKey" | "closedAt">> {
   const [dues, mealTotals] = await Promise.all([
-    getMonthlyDues(supabase, monthKey),
+    getMonthlyDues(supabase, cottageId, monthKey),
     getMealTotals(supabase, monthKey),
   ]);
 
@@ -52,8 +62,12 @@ async function getMonthSummary(supabase: SupabaseClient, monthKey: string): Prom
   };
 }
 
-export async function getActiveMonthSummary(supabase: SupabaseClient, monthKey: string): Promise<MonthSummary> {
-  const summary = await getMonthSummary(supabase, monthKey);
+export async function getActiveMonthSummary(
+  supabase: SupabaseClient,
+  cottageId: string,
+  monthKey: string
+): Promise<MonthSummary> {
+  const summary = await getMonthSummary(supabase, cottageId, monthKey);
   return { monthKey, closedAt: null, ...summary };
 }
 
@@ -69,7 +83,7 @@ export async function getMonthHistory(supabase: SupabaseClient, cottageId: strin
 
   return Promise.all(
     rows.map(async (row) => {
-      const summary = await getMonthSummary(supabase, row.month_key);
+      const summary = await getMonthSummary(supabase, cottageId, row.month_key);
       return { monthKey: row.month_key, closedAt: row.closed_at, ...summary };
     })
   );

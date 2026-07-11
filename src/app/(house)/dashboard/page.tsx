@@ -2,7 +2,7 @@ import { Wallet, Receipt, HandCoins, UtensilsCrossed, ShoppingBasket } from "luc
 import { getDisplayName, getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import {
-  getExpenseSharesByCategoryForMonth,
+  getFullCategoryTotalsForMonth,
   getMemberCategoryBreakdown,
   getMonthlyDues,
 } from "@/lib/data/finance";
@@ -54,8 +54,8 @@ export default async function DashboardPage() {
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
   const [dues, categoryTotals, { data: members }, myBazaarDuty] = await Promise.all([
-    getMonthlyDues(supabase, monthKey),
-    getExpenseSharesByCategoryForMonth(supabase, monthKey),
+    getMonthlyDues(supabase, profile.cottage_id, monthKey),
+    getFullCategoryTotalsForMonth(supabase, profile.cottage_id, monthKey),
     supabase
       .from("profiles")
       .select("id, first_name, last_name, avatar_url")
@@ -64,9 +64,9 @@ export default async function DashboardPage() {
     getMyNextBazaarDuty(supabase, profile.id),
   ]);
 
-  const myDue = dues.get(profile.id) ?? { rent: 0, expenses: 0, paid: 0, due: 0 };
+  const myDue = dues.get(profile.id) ?? { rent: 0, expenses: 0, carryIn: 0, paid: 0, due: 0 };
   const myCostBreakdown = getMemberCategoryBreakdown(categoryTotals, profile.id);
-  const totalToPay = myDue.rent + myDue.expenses;
+  const totalToPay = myDue.rent + myDue.expenses + myDue.carryIn;
   const { rows: mealRows, mealRate, totalBazaar, totalMeals } = await getMemberMealSummary(
     supabase,
     monthKey,

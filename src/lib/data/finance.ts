@@ -1,5 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getUtilityCarryIns } from "./meal";
+import { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
+
+export { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
 
 /** Returns the latest rent_assignment per user (most recent effective_from wins). */
 export async function getCurrentRents(supabase: SupabaseClient) {
@@ -71,15 +75,69 @@ export async function getExpenseSharesByCategoryForMonth(
   return byUser;
 }
 
-export const UTILITY_CATEGORY_LABELS: Record<string, string> = {
-  house_rent: "House Rent",
-  electricity: "Electricity",
-  servant: "Servant Cost",
-  trash: "Trash Cost",
-  internet: "Internet Cost",
-  filter_kit: "Filter Kit Cost",
-  other: "Other",
-};
+
+/**
+ * Per-user, per-category totals from admin-entered utility_adjustments
+ * (Utilities → Generate Utility Statement) for the given month. Same shape
+ * as getExpenseSharesByCategoryForMonth so the two merge into one map —
+ * amounts are signed (negative = reduces due, e.g. a discount).
+ */
+export async function getUtilityAdjustmentsByCategoryForMonth(
+  supabase: SupabaseClient,
+  cottageId: string,
+  monthKey: string
+) {
+  const { data } = await supabase
+    .from("utility_adjustments")
+    .select("user_id, category, amount")
+    .eq("cottage_id", cottageId)
+    .eq("month_key", monthKey);
+
+  const byUser = new Map<string, Map<string, number>>();
+  for (const row of data ?? []) {
+    if (!byUser.has(row.user_id)) byUser.set(row.user_id, new Map());
+    const categories = byUser.get(row.user_id)!;
+    categories.set(row.category, (categories.get(row.category) ?? 0) + Number(row.amount));
+  }
+  return byUser;
+}
+
+function mergeCategoryTotals(
+  a: Map<string, Map<string, number>>,
+  b: Map<string, Map<string, number>>
+) {
+  const merged = new Map<string, Map<string, number>>();
+  for (const [userId, categories] of a) {
+    merged.set(userId, new Map(categories));
+  }
+  for (const [userId, categories] of b) {
+    const existing = merged.get(userId) ?? new Map<string, number>();
+    for (const [category, amount] of categories) {
+      existing.set(category, (existing.get(category) ?? 0) + amount);
+    }
+    merged.set(userId, existing);
+  }
+  return merged;
+}
+
+/**
+ * Full per-user, per-category utility breakdown for the month: recorded
+ * expenses (expense_splits) plus admin adjustments (utility_adjustments).
+ * This is the authoritative source for "what does each member owe" —
+ * getMonthlyDues, the Dashboard cost card, and the Utility Statement page
+ * all read from this so the numbers never disagree with each other.
+ */
+export async function getFullCategoryTotalsForMonth(
+  supabase: SupabaseClient,
+  cottageId: string,
+  monthKey: string
+) {
+  const [expenseTotals, adjustmentTotals] = await Promise.all([
+    getExpenseSharesByCategoryForMonth(supabase, monthKey),
+    getUtilityAdjustmentsByCategoryForMonth(supabase, cottageId, monthKey),
+  ]);
+  return mergeCategoryTotals(expenseTotals, adjustmentTotals);
+}
 
 /** Category → amount breakdown for one member's utility costs this month. */
 export function getMemberCategoryBreakdown(
@@ -170,21 +228,26 @@ export async function getCottageBalance(supabase: SupabaseClient, cottageId: str
 }
 
 /**
- * Monthly due per user = house_rent utility share + other utility shares -
- * settlements paid, for the given month. "Rent" here is the member's share of
- * any House Rent category expense (which utilities/actions.ts auto-populates
- * from their assigned rent_assignments amount) — not rent_assignments itself,
- * so it only counts once a House Rent expense has actually been recorded for
- * the month.
+ * Monthly due per user = house_rent utility share + other utility shares
+ * (including admin adjustments) + carried-in meal due - settlements paid,
+ * for the given month. "Rent" here is the member's share of any House Rent
+ * category expense (which utilities/actions.ts auto-populates from their
+ * assigned rent_assignments amount) — not rent_assignments itself, so it
+ * only counts once a House Rent expense has actually been recorded for the
+ * month.
  */
-export async function getMonthlyDues(supabase: SupabaseClient, monthKey: string) {
-  const [categoryTotals, settlements] = await Promise.all([
-    getExpenseSharesByCategoryForMonth(supabase, monthKey),
+export async function getMonthlyDues(supabase: SupabaseClient, cottageId: string, monthKey: string) {
+  const [categoryTotals, settlements, carryIns] = await Promise.all([
+    getFullCategoryTotalsForMonth(supabase, cottageId, monthKey),
     getSettlementsForMonth(supabase, monthKey),
+    getUtilityCarryIns(supabase, cottageId, monthKey),
   ]);
 
-  const userIds = new Set([...categoryTotals.keys(), ...settlements.keys()]);
-  const dues = new Map<string, { rent: number; expenses: number; paid: number; due: number }>();
+  const userIds = new Set([...categoryTotals.keys(), ...settlements.keys(), ...carryIns.keys()]);
+  const dues = new Map<
+    string,
+    { rent: number; expenses: number; carryIn: number; paid: number; due: number }
+  >();
 
   for (const userId of userIds) {
     const categories = categoryTotals.get(userId);
@@ -193,8 +256,9 @@ export async function getMonthlyDues(supabase: SupabaseClient, monthKey: string)
     for (const [category, amount] of categories ?? []) {
       if (category !== "house_rent") expenses += amount;
     }
+    const carryIn = carryIns.get(userId) ?? 0;
     const paid = settlements.get(userId) ?? 0;
-    dues.set(userId, { rent, expenses, paid, due: rent + expenses - paid });
+    dues.set(userId, { rent, expenses, carryIn, paid, due: rent + expenses + carryIn - paid });
   }
 
   return dues;
