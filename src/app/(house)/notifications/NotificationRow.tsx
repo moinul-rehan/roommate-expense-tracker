@@ -6,9 +6,11 @@ import { markNotificationRead } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { getNotificationIcon } from "../notification-icons";
 
 type Notification = {
   id: string;
+  type: string;
   title: string;
   body: string | null;
   link: string | null;
@@ -18,16 +20,22 @@ type Notification = {
 
 export function NotificationRow({ notification }: { notification: Notification }) {
   const [pending, startTransition] = useTransition();
+  const Icon = getNotificationIcon(notification.type);
 
   return (
     <TableRow className={notification.is_read ? undefined : "bg-accent/40"}>
       <TableCell>
-        <div className="flex flex-col gap-0.5">
-          <span className="flex items-center gap-2 font-medium text-foreground">
-            {notification.title}
-            {!notification.is_read && <Badge variant="default">New</Badge>}
-          </span>
-          {notification.body && <span className="text-sm text-muted-foreground">{notification.body}</span>}
+        <div className="flex items-start gap-2.5">
+          <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+            <Icon className="size-3.5" />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="flex items-center gap-2 font-medium text-foreground">
+              {notification.title}
+              {!notification.is_read && <Badge variant="default">New</Badge>}
+            </span>
+            {notification.body && <span className="text-sm text-muted-foreground">{notification.body}</span>}
+          </div>
         </div>
       </TableCell>
       <TableCell className="text-muted-foreground">

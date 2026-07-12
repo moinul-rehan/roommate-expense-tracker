@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "@/lib/data/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { notifyUsers } from "@/lib/data/notifications";
 
 export type InviteMemberState = { error?: string; success?: string } | undefined;
 
@@ -133,15 +134,43 @@ export async function assignBazaarDuty(
 
   if (error) return { error: "Could not assign bazaar duty." };
 
+  await notifyUsers(supabase, admin_.cottage_id, [userId], {
+    type: "bazaar_duty_assigned",
+    title: "You've been assigned bazaar duty",
+    body: `${formatDate(startDate)} – ${formatDate(endDate)}${note ? ` — ${note}` : ""}`,
+    link: "/members",
+  });
+
   revalidatePath("/members");
   revalidatePath("/dashboard");
   return { success: "Bazaar duty assigned." };
 }
 
+function formatDate(iso: string) {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export async function removeBazaarDuty(dutyId: string) {
-  await requireSuperAdmin();
+  const admin_ = await requireSuperAdmin();
   const supabase = await createClient();
+
+  const { data: duty } = await supabase
+    .from("bazaar_duties")
+    .select("user_id, start_date, end_date")
+    .eq("id", dutyId)
+    .single();
+
   await supabase.from("bazaar_duties").delete().eq("id", dutyId);
+
+  if (duty) {
+    await notifyUsers(supabase, admin_.cottage_id, [duty.user_id], {
+      type: "bazaar_duty_removed",
+      title: "A bazaar duty was removed",
+      body: `${formatDate(duty.start_date)} – ${formatDate(duty.end_date)} is no longer assigned to you.`,
+      link: "/members",
+    });
+  }
+
   revalidatePath("/members");
   revalidatePath("/dashboard");
 }

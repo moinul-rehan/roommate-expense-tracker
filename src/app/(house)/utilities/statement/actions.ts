@@ -126,9 +126,27 @@ export async function addUtilityAdjustment(
 }
 
 export async function deleteUtilityAdjustment(id: string) {
-  await requireSuperAdmin();
+  const profile = await requireSuperAdmin();
   const supabase = await createClient();
+
+  const { data: adjustment } = await supabase
+    .from("utility_adjustments")
+    .select("user_id, category, amount")
+    .eq("id", id)
+    .single();
+
   await supabase.from("utility_adjustments").delete().eq("id", id);
+
+  if (adjustment && adjustment.user_id !== profile.id) {
+    const categoryLabel = UTILITY_CATEGORY_LABELS[adjustment.category] ?? adjustment.category;
+    await notifyUsers(supabase, profile.cottage_id, [adjustment.user_id], {
+      type: "utility_adjustment_removed",
+      title: `Statement line removed: ${categoryLabel}`,
+      body: `${adjustment.amount >= 0 ? "-" : "+"}${Math.abs(Number(adjustment.amount)).toFixed(2)} reversed from your utility due.`,
+      link: "/utilities/statement",
+    });
+  }
+
   revalidatePath("/utilities/statement");
   revalidatePath("/dashboard");
   revalidatePath("/months");

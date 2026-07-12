@@ -111,6 +111,13 @@ export async function addExpense(
     if (adjError) {
       return { error: "Expense saved but the member credit could not be applied. Contact admin." };
     }
+
+    await notifyUsers(supabase, profile.cottage_id, [paidByMember], {
+      type: "utility_expense_credit",
+      title: `Credited for ${categoryLabel}`,
+      body: `${amount.toFixed(2)} reduced from your utility due — you paid this directly.`,
+      link: "/utilities",
+    });
   }
 
   revalidateUtilityPaths();

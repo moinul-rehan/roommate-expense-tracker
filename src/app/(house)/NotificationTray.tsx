@@ -6,9 +6,11 @@ import { Bell } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { markNotificationRead } from "./notifications/actions";
+import { getNotificationIcon } from "./notification-icons";
 
 type Notification = {
   id: string;
+  type: string;
   title: string;
   body: string | null;
   link: string | null;
@@ -46,32 +48,40 @@ export function NotificationTray({
           {unreadCount > 0 && <span className="text-xs text-muted-foreground">{unreadCount} unread</span>}
         </div>
         <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
-          {notifications.map((n) => (
-            <div
-              key={n.id}
-              className={
-                "flex flex-col gap-0.5 rounded-lg px-2 py-2 " + (n.is_read ? "" : "bg-accent/40")
-              }
-            >
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">{n.title}</p>
-                {!n.is_read && (
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => startTransition(() => markNotificationRead(n.id))}
-                    className="shrink-0 text-xs text-primary hover:underline"
-                  >
-                    Mark read
-                  </button>
-                )}
+          {notifications.map((n) => {
+            const Icon = getNotificationIcon(n.type);
+            return (
+              <div
+                key={n.id}
+                className={
+                  "flex gap-2.5 rounded-lg px-2 py-2 " + (n.is_read ? "" : "bg-accent/40")
+                }
+              >
+                <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                  <Icon className="size-3.5" />
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-foreground">{n.title}</p>
+                    {!n.is_read && (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => startTransition(() => markNotificationRead(n.id))}
+                        className="shrink-0 text-xs text-primary hover:underline"
+                      >
+                        Mark read
+                      </button>
+                    )}
+                  </div>
+                  {n.body && <p className="text-xs text-muted-foreground">{n.body}</p>}
+                  <p className="text-xs text-muted-foreground/70">
+                    {new Date(n.created_at).toLocaleString()}
+                  </p>
+                </div>
               </div>
-              {n.body && <p className="text-xs text-muted-foreground">{n.body}</p>}
-              <p className="text-xs text-muted-foreground/70">
-                {new Date(n.created_at).toLocaleString()}
-              </p>
-            </div>
-          ))}
+            );
+          })}
           {!notifications.length && (
             <p className="px-2 py-6 text-center text-sm text-muted-foreground">No notifications yet.</p>
           )}

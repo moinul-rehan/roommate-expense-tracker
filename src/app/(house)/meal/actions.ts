@@ -93,6 +93,14 @@ export async function updateBazaarEntry(
     return { error: "Could not update the bazaar entry." };
   }
 
+  const members = await activeMemberIds(supabase);
+  await notifyUsers(
+    supabase,
+    profile.cottage_id,
+    members.filter((memberId) => memberId !== profile.id),
+    { type: "bazaar_entry", title: "A bazaar entry was updated", body: `${description ?? "Bazaar"} — ${amount.toFixed(2)}`, link: "/meal" }
+  );
+
   revalidatePath("/meal");
   revalidatePath("/dashboard");
   revalidatePath("/meal/month-details");
@@ -164,6 +172,12 @@ export async function updateDeposit(
   if (!Number.isFinite(amount) || amount <= 0) return { error: "Enter a valid amount." };
   if (!depositDate) return { error: "Pick a date." };
 
+  const { data: existing } = await supabase
+    .from("meal_deposits")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("meal_deposits")
     .update({ amount, deposit_date: depositDate, note })
@@ -171,6 +185,15 @@ export async function updateDeposit(
 
   if (error) {
     return { error: "Could not update the deposit." };
+  }
+
+  if (existing && existing.user_id !== profile.id) {
+    await notifyUsers(supabase, profile.cottage_id, [existing.user_id], {
+      type: "meal_deposit",
+      title: "Your meal deposit was updated",
+      body: `${amount.toFixed(2)} on ${depositDate}.`,
+      link: "/meal",
+    });
   }
 
   revalidatePath("/meal");
@@ -221,6 +244,19 @@ export async function addDailyMealsForDate(
 
   if (error) return { error: "Could not save the meal counts." };
 
+  await Promise.all(
+    rows
+      .filter((row) => row.user_id !== profile.id)
+      .map((row) =>
+        notifyUsers(supabase, profile.cottage_id, [row.user_id], {
+          type: "daily_meal",
+          title: "Your meal count was logged",
+          body: `${row.count} meal${row.count === 1 ? "" : "s"} on ${mealDate}.`,
+          link: "/meal",
+        })
+      )
+  );
+
   revalidatePath("/meal");
   revalidatePath("/dashboard");
   revalidatePath("/meal/month-details");
@@ -266,6 +302,19 @@ export async function updateDailyMealsForDate(
   if (error) {
     return { error: "Could not update meals for this date." };
   }
+
+  await Promise.all(
+    rows
+      .filter((row) => row.user_id !== profile.id)
+      .map((row) =>
+        notifyUsers(supabase, profile.cottage_id, [row.user_id], {
+          type: "daily_meal",
+          title: "Your meal count was updated",
+          body: `${row.count} meal${row.count === 1 ? "" : "s"} on ${mealDate}.`,
+          link: "/meal",
+        })
+      )
+  );
 
   revalidatePath("/meal");
   revalidatePath("/dashboard");
