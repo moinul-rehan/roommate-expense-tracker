@@ -37,6 +37,10 @@ export function CreateContactDialog() {
               <Input id="contact-name" name="name" required />
             </div>
             <div className="flex flex-col gap-1.5">
+              <Label htmlFor="contact-level">Level</Label>
+              <Input id="contact-level" name="level" placeholder="e.g. Landlord, Electrician" />
+            </div>
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="contact-mobile">Mobile number</Label>
               <Input id="contact-mobile" name="mobile_number" placeholder="Optional" />
             </div>

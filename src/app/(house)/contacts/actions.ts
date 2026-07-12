@@ -14,6 +14,7 @@ export async function addContact(
   const supabase = await createClient();
 
   const name = String(formData.get("name") ?? "").trim();
+  const level = String(formData.get("level") ?? "").trim() || null;
   const mobileNumber = String(formData.get("mobile_number") ?? "").trim() || null;
   const email = String(formData.get("email") ?? "").trim() || null;
 
@@ -22,6 +23,7 @@ export async function addContact(
   const { error } = await supabase.from("contacts").insert({
     cottage_id: profile.cottage_id,
     name,
+    level,
     mobile_number: mobileNumber,
     email,
     created_by: profile.id,

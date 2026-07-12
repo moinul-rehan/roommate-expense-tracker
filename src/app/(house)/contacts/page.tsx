@@ -1,6 +1,7 @@
 import { getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { CreateContactDialog } from "./CreateContactDialog";
 import { DeleteContactButton } from "./DeleteContactButton";
 import { Mail, Phone } from "lucide-react";
@@ -12,7 +13,7 @@ export default async function ContactsPage() {
 
   const { data: contacts } = await supabase
     .from("contacts")
-    .select("id, name, mobile_number, email")
+    .select("id, name, level, mobile_number, email")
     .eq("cottage_id", profile.cottage_id)
     .order("name");
 
@@ -32,7 +33,10 @@ export default async function ContactsPage() {
         {contacts?.map((c) => (
           <Card key={c.id} className="flex flex-row items-start justify-between gap-3 rounded-2xl p-5">
             <div className="flex flex-col gap-1.5">
-              <p className="font-semibold text-foreground">{c.name}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="font-semibold text-foreground">{c.name}</p>
+                {c.level && <Badge variant="outline">{c.level}</Badge>}
+              </div>
               {c.mobile_number && (
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Phone className="size-3.5 shrink-0" />
