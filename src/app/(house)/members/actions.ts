@@ -38,13 +38,21 @@ export async function inviteMember(
     return { error: error?.message ?? "Could not invite member." };
   }
 
-  if (roomLabel) {
-    const supabase = await createClient();
-    await supabase
-      .from("profiles")
-      .update({ room_label: roomLabel })
-      .eq("id", data.user.id);
-  }
+  // handle_new_user only sets id/first_name/last_name/email/role — the
+  // permission columns fall back to their table defaults, three of which
+  // are `true`. A newly invited member should start as a plain general
+  // member with no permissions granted, so zero them out explicitly here.
+  const supabase = await createClient();
+  await supabase
+    .from("profiles")
+    .update({
+      room_label: roomLabel || null,
+      can_add_expenses: false,
+      can_add_bazaar: false,
+      can_add_meals: false,
+      can_add_deposit: false,
+    })
+    .eq("id", data.user.id);
 
   revalidatePath("/members");
   return { success: `Invite sent to ${email}.` };
@@ -104,6 +112,14 @@ export async function assignBazaarDuty(
   }
   if (endDate < startDate) {
     return { error: "End date must be on or after the start date." };
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  if (endDate < today) {
+    // A duty entirely in the past would insert successfully but never show
+    // up anywhere (Members page and Dashboard both only query duties whose
+    // end_date hasn't passed yet) — surface that as a validation error
+    // instead of a silent no-op the admin would otherwise mistake for a bug.
+    return { error: "End date can't be in the past — the duty would never show up anywhere." };
   }
 
   const { error } = await supabase.from("bazaar_duties").insert({

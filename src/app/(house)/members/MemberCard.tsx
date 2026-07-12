@@ -233,6 +233,7 @@ function AssignDutyDialog({
   memberName: string;
 }) {
   const [state, action, pending] = useActionState(assignBazaarDuty, undefined);
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -245,11 +246,11 @@ function AssignDutyDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="start_date">Start date</Label>
-              <Input id="start_date" name="start_date" type="date" required />
+              <Input id="start_date" name="start_date" type="date" min={today} defaultValue={today} required />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="end_date">End date</Label>
-              <Input id="end_date" name="end_date" type="date" required />
+              <Input id="end_date" name="end_date" type="date" min={today} required />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
