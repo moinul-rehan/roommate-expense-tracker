@@ -30,7 +30,6 @@ import {
 
 const topLinks = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }];
 const bottomLinks = [
-  { href: "/utilities", label: "Utilities", icon: Zap },
   { href: "/members", label: "Members", icon: Users },
   { href: "/months", label: "Months", icon: CalendarRange },
 ];
@@ -81,17 +80,21 @@ export default async function HouseLayout({
                 canAddDeposit={profile.role === "super_admin" || profile.can_add_deposit}
               />
             </SidebarMenuItem>
+            <SidebarMenuItem>
+              <div className="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/60 group-data-[collapsible=icon]:justify-center">
+                <Zap className="size-4" />
+                <span className="group-data-[collapsible=icon]:hidden">Utilities</span>
+              </div>
+              <UtilitiesQuickAddMenu
+                members={members ?? []}
+                defaultDate={defaultDate}
+                isSuperAdmin={profile.role === "super_admin"}
+                canAddExpenses={profile.role === "super_admin" || profile.can_add_expenses}
+              />
+            </SidebarMenuItem>
             {bottomLinks.map((link) => (
               <SidebarMenuItem key={link.href}>
                 <SidebarNavLink href={link.href} label={link.label} icon={<link.icon />} />
-                {link.href === "/utilities" &&
-                  (profile.role === "super_admin" || profile.can_add_expenses) && (
-                    <UtilitiesQuickAddMenu
-                      members={members ?? []}
-                      defaultDate={defaultDate}
-                      isSuperAdmin={profile.role === "super_admin"}
-                    />
-                  )}
               </SidebarMenuItem>
             ))}
             <SidebarMenuItem>

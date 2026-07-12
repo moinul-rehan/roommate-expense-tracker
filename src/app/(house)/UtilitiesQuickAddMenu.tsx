@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, FileText, Wallet } from "lucide-react";
+import { Plus, FileText, Wallet, ListTree } from "lucide-react";
 import { addCottageCost } from "./utilities/actions";
 import { DepositForm } from "./utilities/DepositForm";
 import { Button } from "@/components/ui/button";
@@ -31,10 +31,12 @@ export function UtilitiesQuickAddMenu({
   members,
   defaultDate,
   isSuperAdmin,
+  canAddExpenses,
 }: {
   members: Member[];
   defaultDate: string;
   isSuperAdmin: boolean;
+  canAddExpenses: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
@@ -56,16 +58,24 @@ export function UtilitiesQuickAddMenu({
   return (
     <SidebarMenuSub>
       <SidebarMenuSubItem>
-        <SidebarMenuSubButton
-          onClick={() => {
-            setOpenMobile(false);
-            setOpen(true);
-          }}
-        >
-          <Plus />
-          Add Cottage Cost
+        <SidebarMenuSubButton render={<Link href="/utilities" onClick={() => setOpenMobile(false)} />}>
+          <ListTree />
+          Utility Details
         </SidebarMenuSubButton>
       </SidebarMenuSubItem>
+      {canAddExpenses && (
+        <SidebarMenuSubItem>
+          <SidebarMenuSubButton
+            onClick={() => {
+              setOpenMobile(false);
+              setOpen(true);
+            }}
+          >
+            <Plus />
+            Add Cottage Cost
+          </SidebarMenuSubButton>
+        </SidebarMenuSubItem>
+      )}
       {isSuperAdmin && (
         <SidebarMenuSubItem>
           <SidebarMenuSubButton

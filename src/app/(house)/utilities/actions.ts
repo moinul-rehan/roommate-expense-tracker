@@ -175,13 +175,25 @@ export async function addUtilityDeposit(
   }
 
   const supabase = await createClient();
-  const userId = String(formData.get("user_id") ?? "");
+  const source = String(formData.get("source") ?? "");
+  const isAddition = source === "addition";
+  const userId = isAddition ? null : source;
   const amount = Number(formData.get("amount"));
   const depositDate = String(formData.get("deposit_date") ?? "") || undefined;
   const note = String(formData.get("note") ?? "").trim() || null;
 
-  if (!userId) return { error: "Select a member." };
+  if (!source) return { error: "Select a source." };
   if (!Number.isFinite(amount) || amount <= 0) return { error: "Enter a valid amount." };
+
+  if (!isAddition) {
+    const { data: member } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", userId as string)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (!member) return { error: "Pick a valid member." };
+  }
 
   const activeMonthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
@@ -189,6 +201,7 @@ export async function addUtilityDeposit(
     cottage_id: profile.cottage_id,
     month_key: activeMonthKey,
     user_id: userId,
+    source_type: isAddition ? "addition" : "member",
     amount,
     deposit_date: depositDate,
     note,
@@ -199,12 +212,27 @@ export async function addUtilityDeposit(
     return { error: `Could not save the deposit: ${error.message}` };
   }
 
-  await notifyUsers(supabase, profile.cottage_id, [userId], {
-    type: "utility_deposit",
-    title: "Utility deposit recorded",
-    body: `${amount.toFixed(2)} added toward your utility due.`,
-    link: "/utilities",
-  });
+  if (isAddition) {
+    // The cottage's own previously-held money entering the system — credit
+    // the Cottage Balance directly. It doesn't reduce anyone's due, so it's
+    // never included in getUtilityDepositsForMonth's due-reduction map.
+    const { error: balanceError } = await supabase.from("cottage_balance_transactions").insert({
+      amount,
+      direction: "in",
+      reason: note ?? "Utility deposit addition",
+      created_by: profile.id,
+    });
+    if (balanceError) {
+      return { error: "Deposit saved but Cottage Balance could not be updated. Contact admin." };
+    }
+  } else {
+    await notifyUsers(supabase, profile.cottage_id, [userId as string], {
+      type: "utility_deposit",
+      title: "Utility deposit recorded",
+      body: `${amount.toFixed(2)} added toward your utility due.`,
+      link: "/utilities",
+    });
+  }
 
   revalidatePath("/utilities");
   revalidatePath("/utilities/statement");

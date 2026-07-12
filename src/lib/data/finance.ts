@@ -172,7 +172,7 @@ export async function getSettlementsForMonth(supabase: SupabaseClient, monthKey:
   return paidByUser;
 }
 
-/** Admin-recorded utility deposits per user within [start, end): reduces due the same way a settlement does. */
+/** Admin-recorded member utility deposits per user within the month: reduces due the same way a settlement does. "Addition" deposits (cottage's own money) are excluded — they credit the Cottage Balance instead, not any member's due. */
 export async function getUtilityDepositsForMonth(
   supabase: SupabaseClient,
   cottageId: string,
@@ -182,13 +182,48 @@ export async function getUtilityDepositsForMonth(
     .from("utility_deposits")
     .select("user_id, amount")
     .eq("cottage_id", cottageId)
-    .eq("month_key", monthKey);
+    .eq("month_key", monthKey)
+    .eq("source_type", "member");
 
   const byUser = new Map<string, number>();
   for (const row of data ?? []) {
+    if (!row.user_id) continue;
     byUser.set(row.user_id, (byUser.get(row.user_id) ?? 0) + Number(row.amount));
   }
   return byUser;
+}
+
+export type UtilityDepositRow = {
+  id: string;
+  user_id: string | null;
+  amount: number;
+  deposit_date: string;
+  note: string | null;
+  source_type: "member" | "addition";
+};
+
+/** Full utility deposit history for the month (both member and addition rows), newest first. */
+export async function getUtilityDepositHistory(
+  supabase: SupabaseClient,
+  cottageId: string,
+  monthKey: string
+): Promise<UtilityDepositRow[]> {
+  const { data } = await supabase
+    .from("utility_deposits")
+    .select("id, user_id, amount, deposit_date, note, source_type")
+    .eq("cottage_id", cottageId)
+    .eq("month_key", monthKey)
+    .order("deposit_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    user_id: row.user_id,
+    amount: Number(row.amount),
+    deposit_date: row.deposit_date,
+    note: row.note,
+    source_type: row.source_type,
+  }));
 }
 
 /**

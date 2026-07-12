@@ -34,13 +34,14 @@ export function DepositForm({
     <form action={action} className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label>Member</Label>
-          <Select name="user_id" required>
+          <Label>Source</Label>
+          <Select name="source" required>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Member…">
+              <SelectValue placeholder="Source…">
                 {(value: string | null) => {
+                  if (value === "addition") return "Addition (Cottage money)";
                   const member = members.find((m) => m.id === value);
-                  return member ? getDisplayName(member) : "Member…";
+                  return member ? getDisplayName(member) : "Source…";
                 }}
               </SelectValue>
             </SelectTrigger>
@@ -50,6 +51,7 @@ export function DepositForm({
                   {getDisplayName(m)}
                 </SelectItem>
               ))}
+              <SelectItem value="addition">Addition (Cottage money)</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import { getCottageBalance, getCurrentRents, monthRange } from "@/lib/data/finance";
+import { getCottageBalance, getCurrentRents, getUtilityDepositHistory, monthRange } from "@/lib/data/finance";
 import { getActiveMonthKey, defaultDateForMonth } from "@/lib/data/months";
 import { AddExpenseForm } from "./AddExpenseForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,30 +47,33 @@ export default async function UtilitiesPage({
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
   const { start, end } = monthRange(monthKey);
 
-  const [{ data: members }, expensesQuery, cottageBalance, rents] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, first_name, last_name")
-      .eq("is_active", true)
-      .order("last_name"),
-    (async () => {
-      let query = supabase
-        .from("expenses")
-        .select(
-          "id, category, amount, description, expense_date, split_type, payment_source, payer:paid_by(first_name, last_name)"
-        )
-        .gte("expense_date", start)
-        .lt("expense_date", end)
-        .order("expense_date", { ascending: false })
-        .limit(50);
-      if (category && CATEGORIES.includes(category as (typeof CATEGORIES)[number])) {
-        query = query.eq("category", category);
-      }
-      return query;
-    })(),
-    getCottageBalance(supabase, profile.cottage_id),
-    getCurrentRents(supabase),
-  ]);
+  const [{ data: members }, expensesQuery, monthExpensesQuery, cottageBalance, rents, depositHistory] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .eq("is_active", true)
+        .order("last_name"),
+      (async () => {
+        let query = supabase
+          .from("expenses")
+          .select(
+            "id, category, amount, description, expense_date, split_type, payment_source, payer:paid_by(first_name, last_name)"
+          )
+          .gte("expense_date", start)
+          .lt("expense_date", end)
+          .order("expense_date", { ascending: false })
+          .limit(50);
+        if (category && CATEGORIES.includes(category as (typeof CATEGORIES)[number])) {
+          query = query.eq("category", category);
+        }
+        return query;
+      })(),
+      supabase.from("expenses").select("amount").gte("expense_date", start).lt("expense_date", end),
+      getCottageBalance(supabase, profile.cottage_id),
+      getCurrentRents(supabase),
+      getUtilityDepositHistory(supabase, profile.cottage_id, monthKey),
+    ]);
 
   const expenses = expensesQuery.data ?? [];
   const canAddExpenses = profile.role === "super_admin" || profile.can_add_expenses;
@@ -80,17 +83,24 @@ export default async function UtilitiesPage({
   }));
   const defaultDate = defaultDateForMonth(monthKey);
 
+  const membersById = new Map((members ?? []).map((m) => [m.id, m]));
+  const totalCottageExpense = (monthExpensesQuery.data ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+  const totalFromMembers = depositHistory
+    .filter((d) => d.source_type === "member")
+    .reduce((sum, d) => sum + d.amount, 0);
+
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Utilities — {monthKey}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            House rent, electricity, servant, trash, internet, filter kit and other shared costs.
-            Private to the household — not shown in the Meal ledger.
-          </p>
-        </div>
-        <Card className="w-full sm:w-auto">
+      <div>
+        <h1 className="text-xl font-semibold text-foreground">Utilities — {monthKey}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          House rent, electricity, servant, trash, internet, filter kit and other shared costs.
+          Private to the household — not shown in the Meal ledger.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card>
           <CardHeader className="pb-0">
             <CardDescription className="text-xs font-medium tracking-wide uppercase">
               Cottage Balance
@@ -99,6 +109,28 @@ export default async function UtilitiesPage({
           </CardHeader>
           <CardContent className="pt-1 text-xs text-muted-foreground">
             Shared pool expenses can be paid from
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-0">
+            <CardDescription className="text-xs font-medium tracking-wide uppercase">
+              Cottage Expense
+            </CardDescription>
+            <CardTitle className="text-2xl font-semibold">{totalCottageExpense.toFixed(2)}</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1 text-xs text-muted-foreground">
+            Total utility expenses for {monthKey}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-0">
+            <CardDescription className="text-xs font-medium tracking-wide uppercase">
+              From Members
+            </CardDescription>
+            <CardTitle className="text-2xl font-semibold">{totalFromMembers.toFixed(2)}</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1 text-xs text-muted-foreground">
+            Deposits collected from members this month
           </CardContent>
         </Card>
       </div>
@@ -117,6 +149,7 @@ export default async function UtilitiesPage({
       )}
 
       <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold text-foreground">Cottage Expense History</h2>
         <div className="flex flex-wrap gap-1 text-sm">
           <Link
             href="/utilities"
@@ -185,6 +218,44 @@ export default async function UtilitiesPage({
                 <TableRow>
                   <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
                     No utility expenses for {monthKey} yet.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-lg font-semibold text-foreground">Cottage Deposit History</h2>
+        <Card className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Note</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {depositHistory.map((d) => {
+                const member = d.user_id ? membersById.get(d.user_id) : null;
+                return (
+                  <TableRow key={d.id}>
+                    <TableCell className="text-muted-foreground">{d.deposit_date}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {d.source_type === "addition" ? "Addition (Cottage)" : member ? getDisplayName(member) : "—"}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{d.note ?? "—"}</TableCell>
+                    <TableCell className="text-right font-medium">{d.amount.toFixed(2)}</TableCell>
+                  </TableRow>
+                );
+              })}
+              {!depositHistory.length && (
+                <TableRow>
+                  <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                    No utility deposits for {monthKey} yet.
                   </TableCell>
                 </TableRow>
               )}
