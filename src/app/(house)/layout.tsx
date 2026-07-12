@@ -89,7 +89,6 @@ export default async function HouseLayout({
                 members={members ?? []}
                 defaultDate={defaultDate}
                 isSuperAdmin={profile.role === "super_admin"}
-                canAddExpenses={profile.role === "super_admin" || profile.can_add_expenses}
               />
             </SidebarMenuItem>
             {bottomLinks.map((link) => (

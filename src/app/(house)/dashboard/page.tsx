@@ -1,17 +1,12 @@
 import { Wallet, Receipt, HandCoins, UtensilsCrossed, ShoppingBasket } from "lucide-react";
 import { getDisplayName, getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getFullCategoryTotalsForMonth,
-  getMemberCategoryBreakdown,
-  getMonthlyDues,
-} from "@/lib/data/finance";
+import { getCottageBalance, getMonthlyDues, getMonthlyExpenseTotal } from "@/lib/data/finance";
 import { getActiveMonthKey } from "@/lib/data/months";
 import { getMemberMealSummary } from "@/lib/data/meal";
 import { getMyNextBazaarDuty } from "@/lib/data/bazaar-duty";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
@@ -28,14 +23,12 @@ function StatCard({
   hint,
   icon: Icon,
   tone = "blue",
-  paid = false,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon: LucideIcon;
   tone?: keyof typeof statCardTones;
-  paid?: boolean;
 }) {
   return (
     <Card className="flex-row items-center gap-4 rounded-2xl p-5">
@@ -43,10 +36,7 @@ function StatCard({
         <Icon className="size-6" />
       </div>
       <div className="flex min-w-0 flex-col gap-1">
-        <div className="flex items-center gap-1.5">
-          <p className="truncate text-sm text-muted-foreground">{label}</p>
-          {paid && <Badge className="bg-emerald-600/15 text-emerald-600">Paid</Badge>}
-        </div>
+        <p className="truncate text-sm text-muted-foreground">{label}</p>
         <p className="truncate text-xl font-semibold text-foreground">{value}</p>
         {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
       </div>
@@ -59,9 +49,10 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
-  const [dues, categoryTotals, { data: members }, myBazaarDuty] = await Promise.all([
+  const [dues, cottageBalance, totalUtilityExpense, { data: members }, myBazaarDuty] = await Promise.all([
     getMonthlyDues(supabase, profile.cottage_id, monthKey),
-    getFullCategoryTotalsForMonth(supabase, profile.cottage_id, monthKey),
+    getCottageBalance(supabase, profile.cottage_id),
+    getMonthlyExpenseTotal(supabase, monthKey),
     supabase
       .from("profiles")
       .select("id, first_name, last_name, avatar_url")
@@ -70,9 +61,8 @@ export default async function DashboardPage() {
     getMyNextBazaarDuty(supabase, profile.id),
   ]);
 
-  const myDue = dues.get(profile.id) ?? { rent: 0, expenses: 0, carryIn: 0, paid: 0, due: 0 };
-  const myCostBreakdown = getMemberCategoryBreakdown(categoryTotals, profile.id);
-  const totalToPay = myDue.rent + myDue.expenses + myDue.carryIn;
+  const outstandingFromMembers = Array.from(dues.values()).reduce((sum, d) => sum + Math.max(0, d.due), 0);
+  const collectedThisMonth = Array.from(dues.values()).reduce((sum, d) => sum + d.paid, 0);
   const { rows: mealRows, mealRate, totalBazaar, totalMeals } = await getMemberMealSummary(
     supabase,
     monthKey,
@@ -99,45 +89,33 @@ export default async function DashboardPage() {
       <div>
         <h2 className="mb-3 text-lg font-semibold text-foreground">Utility overview</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="rounded-2xl p-5">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Your utility costs
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-1.5 px-0 text-sm">
-              {myCostBreakdown.map((c) => (
-                <div key={c.category} className="flex justify-between">
-                  <span className="text-muted-foreground">{c.label}</span>
-                  <span className="font-medium text-foreground">{c.amount.toFixed(2)} tk</span>
-                </div>
-              ))}
-              {!myCostBreakdown.length && (
-                <p className="text-muted-foreground">No utility costs yet this month.</p>
-              )}
-            </CardContent>
-          </Card>
           <StatCard
             icon={Wallet}
             tone="blue"
-            label="Total to pay"
-            value={`${totalToPay.toFixed(2)} tk`}
-            hint="All utility costs owed this month"
-          />
-          <StatCard
-            icon={HandCoins}
-            tone="green"
-            label="Already paid"
-            value={`${myDue.paid.toFixed(2)} tk`}
-            hint="Settled so far this month"
+            label="Cottage Balance"
+            value={`${cottageBalance.toFixed(2)} tk`}
+            hint="Previous + deposits − cottage-paid expenses"
           />
           <StatCard
             icon={Receipt}
             tone="orange"
-            label="Balance / due"
-            value={`${myDue.due.toFixed(2)} tk`}
-            hint="Total to pay minus already paid"
-            paid={totalToPay > 0 && myDue.due <= 0}
+            label="Total Utility Expense"
+            value={`${totalUtilityExpense.toFixed(2)} tk`}
+            hint="All shared expenses this month"
+          />
+          <StatCard
+            icon={HandCoins}
+            tone="red"
+            label="Outstanding From Members"
+            value={`${outstandingFromMembers.toFixed(2)} tk`}
+            hint="Sum of every member's Remaining Due"
+          />
+          <StatCard
+            icon={HandCoins}
+            tone="green"
+            label="Collected This Month"
+            value={`${collectedThisMonth.toFixed(2)} tk`}
+            hint="Member Utility Deposits received"
           />
         </div>
       </div>

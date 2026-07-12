@@ -1,13 +1,7 @@
 import { requireSuperAdmin, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import {
-  getExpenseSharesByCategoryForMonth,
-  getMemberCategoryBreakdown,
-  getMonthlyDues,
-  getDefaultCosts,
-} from "@/lib/data/finance";
-import { getUtilityCarryIns } from "@/lib/data/meal";
-import { getActiveMonthKey, formatMonthKey, previousMonthKey } from "@/lib/data/months";
+import { getMonthlyDues, getDefaultCosts } from "@/lib/data/finance";
+import { getActiveMonthKey, formatMonthKey } from "@/lib/data/months";
 import { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,15 +14,13 @@ export default async function UtilityStatementPage() {
   const supabase = await createClient();
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
-  const [{ data: members }, expenseTotals, dues, carryIns, adjustmentsQuery, defaultCosts] = await Promise.all([
+  const [{ data: members }, dues, adjustmentsQuery, defaultCosts] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, first_name, last_name")
       .eq("is_active", true)
       .order("last_name"),
-    getExpenseSharesByCategoryForMonth(supabase, monthKey),
     getMonthlyDues(supabase, profile.cottage_id, monthKey),
-    getUtilityCarryIns(supabase, profile.cottage_id, monthKey),
     supabase
       .from("utility_adjustments")
       .select("id, user_id, category, amount")
@@ -52,32 +44,28 @@ export default async function UtilityStatementPage() {
     adjustmentsByUser.set(row.user_id, list);
   }
 
-  const carryInLabel = `${formatMonthKey(previousMonthKey(monthKey))} Meal Due`;
-
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Generate Utility</h1>
+        <h1 className="text-xl font-semibold text-foreground">Member Utility Statements</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Prepare each member&apos;s final utility bill for {formatMonthKey(monthKey)} before
-          settlement — add category costs, discounts and payments, then review the full
-          breakdown below.
+          Generate the final utility bill for {formatMonthKey(monthKey)} — every cost line,
+          discount and manual adjustment shown here is what distributes money to members. Utility
+          Expenses recorded on Utility Details don&apos;t appear until added here.
         </p>
       </div>
 
       <UtilityAdjustmentForm members={members ?? []} monthKey={monthKey} defaultCosts={defaultCostsByCategory} />
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-foreground">Member statements</h2>
+        <h2 className="mb-3 text-lg font-semibold text-foreground">Member Statements</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(members ?? []).map((m) => {
-            const costLines = getMemberCategoryBreakdown(expenseTotals, m.id);
-            const adjustments = adjustmentsByUser.get(m.id) ?? [];
-            const carryIn = carryIns.get(m.id) ?? 0;
-            const due = dues.get(m.id) ?? { rent: 0, expenses: 0, carryIn: 0, paid: 0, due: 0 };
-            const totalUtilityDue = due.due + due.paid;
+            const lines = adjustmentsByUser.get(m.id) ?? [];
+            const due = dues.get(m.id) ?? { rent: 0, expenses: 0, paid: 0, due: 0 };
+            const assignedCost = due.rent + due.expenses;
             const remaining = due.due;
-            const isPaid = totalUtilityDue > 0 && remaining <= 0;
+            const isPaid = assignedCost > 0 && remaining <= 0;
 
             return (
               <Card key={m.id} className="rounded-2xl p-5">
@@ -91,24 +79,7 @@ export default async function UtilityStatementPage() {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3 px-0 text-sm">
                   <div className="flex flex-col gap-1.5">
-                    {costLines.map((c) => (
-                      <div key={c.category} className="flex justify-between">
-                        <span className="text-muted-foreground">{c.label}</span>
-                        <span className="font-medium text-foreground">{c.amount.toFixed(2)} tk</span>
-                      </div>
-                    ))}
-
-                    {carryIn !== 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">{carryInLabel}</span>
-                        <span className={cn("font-medium", carryIn > 0 ? "text-destructive" : "text-emerald-600")}>
-                          {carryIn > 0 ? "+" : "−"}
-                          {Math.abs(carryIn).toFixed(2)} tk
-                        </span>
-                      </div>
-                    )}
-
-                    {adjustments.map((a) => (
+                    {lines.map((a) => (
                       <div key={a.id} className="flex items-center justify-between gap-2">
                         <span className="text-muted-foreground">
                           {UTILITY_CATEGORY_LABELS[a.category] ?? a.category}
@@ -123,18 +94,16 @@ export default async function UtilityStatementPage() {
                       </div>
                     ))}
 
-                    {!costLines.length && !adjustments.length && carryIn === 0 && (
-                      <p className="text-muted-foreground">No utility costs yet this month.</p>
-                    )}
+                    {!lines.length && <p className="text-muted-foreground">No statement lines yet.</p>}
                   </div>
 
                   <div className="flex flex-col gap-1 border-t pt-2">
                     <div className="flex justify-between font-semibold text-foreground">
-                      <span>Total Utility Due</span>
-                      <span>{totalUtilityDue.toFixed(2)} tk</span>
+                      <span>Assigned Cost</span>
+                      <span>{assignedCost.toFixed(2)} tk</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Already Paid</span>
+                      <span>Paid</span>
                       <span>{due.paid.toFixed(2)} tk</span>
                     </div>
                     <div
