@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { EditMealRowDialog } from "./EditMealRowDialog";
 import { EditDepositDialog } from "./EditDepositDialog";
 import { EditBazaarDialog } from "./EditBazaarDialog";
+import { ViewBazaarDialog } from "./ViewBazaarDialog";
 
 const VIEWS = [
   { value: "meal", label: "Meal Details" },
@@ -198,7 +199,7 @@ export default async function MealMonthDetailsPage({
       )}
 
       {activeView === "cost" && (
-        <Card className="p-0">
+        <Card className="overflow-x-auto p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -206,7 +207,7 @@ export default async function MealMonthDetailsPage({
                 <TableHead>Spent by</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
-                {canEditBazaar && <TableHead className="w-10" />}
+                <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -216,23 +217,33 @@ export default async function MealMonthDetailsPage({
                   <TableCell className="text-foreground">
                     <MemberCell member={r.member} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{r.description ?? "—"}</TableCell>
+                  <TableCell className="max-w-[220px] truncate text-muted-foreground">
+                    {r.description ?? "—"}
+                  </TableCell>
                   <TableCell className="text-right font-medium">{Number(r.amount).toFixed(2)} tk</TableCell>
-                  {canEditBazaar && (
-                    <TableCell className="text-right">
-                      <EditBazaarDialog
-                        id={r.id}
-                        amount={Number(r.amount)}
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <ViewBazaarDialog
                         entryDate={r.entry_date}
+                        amount={Number(r.amount)}
                         description={r.description}
+                        member={r.member}
                       />
-                    </TableCell>
-                  )}
+                      {canEditBazaar && (
+                        <EditBazaarDialog
+                          id={r.id}
+                          amount={Number(r.amount)}
+                          entryDate={r.entry_date}
+                          description={r.description}
+                        />
+                      )}
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
               {!bazaarRecords.length && (
                 <TableRow>
-                  <TableCell colSpan={canEditBazaar ? 5 : 4} className="py-6 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
                     No bazaar entries for {monthKey} yet.
                   </TableCell>
                 </TableRow>
