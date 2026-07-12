@@ -50,7 +50,15 @@ type Member = {
 
 type Duty = { id: string; start_date: string; end_date: string; note: string | null };
 
-export function MemberCard({ member, duties }: { member: Member; duties: Duty[] }) {
+export function MemberCard({
+  member,
+  duties,
+  viewerIsAdmin,
+}: {
+  member: Member;
+  duties: Duty[];
+  viewerIsAdmin: boolean;
+}) {
   const [pending, startTransition] = useTransition();
   const [dutyOpen, setDutyOpen] = useState(false);
   const isSelf = member.role === "super_admin";
@@ -95,72 +103,76 @@ export function MemberCard({ member, duties }: { member: Member; duties: Duty[] 
                 <ShoppingBasket className="size-3.5" />
                 Bazaar duty: {formatDate(d.start_date)} – {formatDate(d.end_date)}
               </span>
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => startTransition(() => removeBazaarDuty(d.id))}
-                className="text-accent-foreground/70 hover:text-accent-foreground"
-                aria-label="Remove bazaar duty"
-              >
-                <X className="size-3.5" />
-              </button>
+              {viewerIsAdmin && (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => startTransition(() => removeBazaarDuty(d.id))}
+                  className="text-accent-foreground/70 hover:text-accent-foreground"
+                  aria-label="Remove bazaar duty"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={<Button variant="outline" size="sm" disabled={isSelf} />}
+      {viewerIsAdmin && (
+        <div className="flex flex-wrap items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={<Button variant="outline" size="sm" disabled={isSelf} />}
+            >
+              Permissions
+              <ChevronDown className="size-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuLabel>Grant access</DropdownMenuLabel>
+              <DropdownMenuCheckboxItem
+                checked={member.can_add_expenses}
+                onCheckedChange={(v) => startTransition(() => setCanAddExpenses(member.id, v))}
+              >
+                Add utility expenses
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={member.can_add_bazaar}
+                onCheckedChange={(v) => startTransition(() => setCanAddBazaar(member.id, v))}
+              >
+                Add meal cost
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={member.can_add_meals}
+                onCheckedChange={(v) => startTransition(() => setCanAddMeals(member.id, v))}
+              >
+                Add meal
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={member.can_add_deposit}
+                onCheckedChange={(v) => startTransition(() => setCanAddDeposit(member.id, v))}
+              >
+                Add meal deposit
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button variant="outline" size="sm" onClick={() => setDutyOpen(true)}>
+            <ShoppingBasket />
+            Assign bazaar duty
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={() => startTransition(() => setMemberActive(member.id, !member.is_active))}
+            className="ml-auto"
           >
-            Permissions
-            <ChevronDown className="size-3.5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Grant access</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem
-              checked={member.can_add_expenses}
-              onCheckedChange={(v) => startTransition(() => setCanAddExpenses(member.id, v))}
-            >
-              Add utility expenses
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={member.can_add_bazaar}
-              onCheckedChange={(v) => startTransition(() => setCanAddBazaar(member.id, v))}
-            >
-              Add meal cost
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={member.can_add_meals}
-              onCheckedChange={(v) => startTransition(() => setCanAddMeals(member.id, v))}
-            >
-              Add meal
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuCheckboxItem
-              checked={member.can_add_deposit}
-              onCheckedChange={(v) => startTransition(() => setCanAddDeposit(member.id, v))}
-            >
-              Add meal deposit
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button variant="outline" size="sm" onClick={() => setDutyOpen(true)}>
-          <ShoppingBasket />
-          Assign bazaar duty
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={pending}
-          onClick={() => startTransition(() => setMemberActive(member.id, !member.is_active))}
-          className="ml-auto"
-        >
-          {member.is_active ? "Deactivate" : "Activate"}
-        </Button>
-      </div>
+            {member.is_active ? "Deactivate" : "Activate"}
+          </Button>
+        </div>
+      )}
 
       <AssignDutyDialog
         open={dutyOpen}

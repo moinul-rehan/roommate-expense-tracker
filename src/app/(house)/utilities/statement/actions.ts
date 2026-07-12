@@ -122,7 +122,6 @@ export async function addUtilityAdjustment(
   revalidatePath("/utilities/statement");
   revalidatePath("/dashboard");
   revalidatePath("/months");
-  revalidatePath("/history");
   return undefined;
 }
 
@@ -133,5 +132,4 @@ export async function deleteUtilityAdjustment(id: string) {
   revalidatePath("/utilities/statement");
   revalidatePath("/dashboard");
   revalidatePath("/months");
-  revalidatePath("/history");
 }

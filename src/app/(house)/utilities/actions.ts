@@ -12,7 +12,7 @@ function revalidateUtilityPaths() {
   revalidatePath("/utilities/statement");
   revalidatePath("/utilities/history");
   revalidatePath("/dashboard");
-  revalidatePath("/history");
+  revalidatePath("/months");
 }
 
 export type AddExpenseState = { error?: string } | undefined;

@@ -41,7 +41,6 @@ async function notifyOtherMembers(
 
 function revalidateAll() {
   revalidatePath("/months");
-  revalidatePath("/history");
   revalidatePath("/dashboard");
   revalidatePath("/meal");
   revalidatePath("/meal/month-details");

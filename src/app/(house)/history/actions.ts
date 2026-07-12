@@ -50,7 +50,6 @@ export async function activateMonth(
   );
 
   revalidatePath("/months");
-  revalidatePath("/history");
   revalidatePath("/dashboard");
   revalidatePath("/meal");
   revalidatePath("/meal/month-details");
@@ -88,7 +87,6 @@ export async function deleteMonth(
   }
 
   revalidatePath("/months");
-  revalidatePath("/history");
   revalidatePath("/dashboard");
   return { success: `${monthKey} and all its data has been permanently deleted.` };
 }
