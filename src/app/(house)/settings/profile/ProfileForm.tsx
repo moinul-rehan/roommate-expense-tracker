@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ type ProfileInfo = {
   gender: "male" | "female" | "other" | null;
   hometown: string | null;
   mobile_number: string | null;
+  address: string | null;
 };
 
 export function ProfileForm({ profile }: { profile: ProfileInfo }) {
@@ -135,6 +137,10 @@ export function ProfileForm({ profile }: { profile: ProfileInfo }) {
                 placeholder="01712345678"
                 defaultValue={profile.mobile_number ?? ""}
               />
+            </div>
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <Label htmlFor="address">Address</Label>
+              <Textarea id="address" name="address" defaultValue={profile.address ?? ""} placeholder="Optional" />
             </div>
           </div>
           {state?.error && <p className="text-sm text-destructive">{state.error}</p>}

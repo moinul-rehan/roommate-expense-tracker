@@ -19,6 +19,7 @@ export async function updateProfile(
   const gender = String(formData.get("gender") ?? "") || null;
   const hometown = String(formData.get("hometown") ?? "").trim() || null;
   const mobileNumber = String(formData.get("mobile_number") ?? "").trim() || null;
+  const address = String(formData.get("address") ?? "").trim() || null;
 
   if (!firstName) {
     return { error: "First name is required." };
@@ -38,6 +39,7 @@ export async function updateProfile(
     p_gender: gender,
     p_hometown: hometown,
     p_mobile_number: mobileNumber,
+    p_address: address,
   });
 
   if (error) {

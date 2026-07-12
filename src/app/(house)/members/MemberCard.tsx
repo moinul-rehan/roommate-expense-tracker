@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
-import { ChevronDown, ShoppingBasket, X } from "lucide-react";
+import { ChevronDown, ShoppingBasket, X, Mail, Phone, MapPin, Home } from "lucide-react";
 import {
   setMemberActive,
   setCanAddExpenses,
@@ -42,6 +42,10 @@ type Member = {
   role: "super_admin" | "member";
   room_label: string | null;
   is_active: boolean;
+  email: string | null;
+  mobile_number: string | null;
+  hometown: string | null;
+  address: string | null;
   can_add_expenses: boolean;
   can_add_bazaar: boolean;
   can_add_meals: boolean;
@@ -91,6 +95,35 @@ export function MemberCard({
           {member.is_active ? "Active" : "Inactive"}
         </Badge>
       </div>
+
+      {(member.email || member.mobile_number || member.hometown || member.address) && (
+        <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+          {member.email && (
+            <span className="flex items-center gap-1.5">
+              <Mail className="size-3.5 shrink-0" />
+              {member.email}
+            </span>
+          )}
+          {member.mobile_number && (
+            <span className="flex items-center gap-1.5">
+              <Phone className="size-3.5 shrink-0" />
+              {member.mobile_number}
+            </span>
+          )}
+          {member.hometown && (
+            <span className="flex items-center gap-1.5">
+              <Home className="size-3.5 shrink-0" />
+              {member.hometown}
+            </span>
+          )}
+          {member.address && (
+            <span className="flex items-start gap-1.5">
+              <MapPin className="mt-0.5 size-3.5 shrink-0" />
+              {member.address}
+            </span>
+          )}
+        </div>
+      )}
 
       {duties.length > 0 && (
         <div className="flex flex-col gap-1.5">

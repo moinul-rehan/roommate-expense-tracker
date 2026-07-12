@@ -12,7 +12,7 @@ export default async function SettingsProfilePage() {
       </div>
 
       <ProfileForm
-        key={[profile.first_name, profile.last_name, profile.gender, profile.hometown, profile.mobile_number].join("|")}
+        key={[profile.first_name, profile.last_name, profile.gender, profile.hometown, profile.mobile_number, profile.address].join("|")}
         profile={profile}
       />
     </div>
