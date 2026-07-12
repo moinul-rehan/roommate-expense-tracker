@@ -5,9 +5,11 @@ import { getCottageBalance, getMonthlyDues, getMonthlyExpenseTotal } from "@/lib
 import { getActiveMonthKey } from "@/lib/data/months";
 import { getMemberMealSummary } from "@/lib/data/meal";
 import { getMyNextBazaarDuty } from "@/lib/data/bazaar-duty";
+import { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { UtilityBreakdownDialog } from "./UtilityBreakdownDialog";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
@@ -55,22 +57,35 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
-  const [dues, cottageBalance, totalUtilityExpense, { data: members }, myBazaarDuty] = await Promise.all([
-    getMonthlyDues(supabase, profile.cottage_id, monthKey),
-    getCottageBalance(supabase, profile.cottage_id),
-    getMonthlyExpenseTotal(supabase, monthKey),
-    supabase
-      .from("profiles")
-      .select("id, first_name, last_name, avatar_url")
-      .eq("is_active", true)
-      .order("last_name"),
-    getMyNextBazaarDuty(supabase, profile.id),
-  ]);
+  const [dues, cottageBalance, totalUtilityExpense, { data: members }, myBazaarDuty, myAdjustmentsQuery] =
+    await Promise.all([
+      getMonthlyDues(supabase, profile.cottage_id, monthKey),
+      getCottageBalance(supabase, profile.cottage_id),
+      getMonthlyExpenseTotal(supabase, monthKey),
+      supabase
+        .from("profiles")
+        .select("id, first_name, last_name, avatar_url")
+        .eq("is_active", true)
+        .order("last_name"),
+      getMyNextBazaarDuty(supabase, profile.id),
+      supabase
+        .from("utility_adjustments")
+        .select("id, category, amount")
+        .eq("cottage_id", profile.cottage_id)
+        .eq("month_key", monthKey)
+        .eq("user_id", profile.id)
+        .order("created_at"),
+    ]);
 
   const outstandingFromMembers = Array.from(dues.values()).reduce((sum, d) => sum + Math.max(0, d.due), 0);
   const collectedThisMonth = Array.from(dues.values()).reduce((sum, d) => sum + d.paid, 0);
   const myDue = dues.get(profile.id) ?? { rent: 0, expenses: 0, paid: 0, due: 0 };
   const myAssignedCost = myDue.rent + myDue.expenses;
+  const myBreakdownLines = (myAdjustmentsQuery.data ?? []).map((a) => ({
+    id: a.id,
+    label: UTILITY_CATEGORY_LABELS[a.category] ?? a.category,
+    amount: Number(a.amount),
+  }));
   const { rows: mealRows, mealRate, totalBazaar, totalMeals } = await getMemberMealSummary(
     supabase,
     monthKey,
@@ -129,7 +144,15 @@ export default async function DashboardPage() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-foreground">Your utility summary</h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-foreground">Your utility summary</h2>
+          <UtilityBreakdownDialog
+            lines={myBreakdownLines}
+            assignedCost={myAssignedCost}
+            paid={myDue.paid}
+            due={myDue.due}
+          />
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard
             icon={Receipt}
