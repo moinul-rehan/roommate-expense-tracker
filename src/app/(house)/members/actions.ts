@@ -145,3 +145,54 @@ export async function removeBazaarDuty(dutyId: string) {
   revalidatePath("/members");
   revalidatePath("/dashboard");
 }
+
+export type RemoveMemberState = { error?: string } | undefined;
+
+/**
+ * Removes a member from the cottage roster — hides them from the Members
+ * page and locks their login — without deleting their profile row or any
+ * historical record that references it (expenses, meals, deposits,
+ * statements). Only ever called on an already-deactivated member.
+ */
+export async function removeMember(
+  _prevState: RemoveMemberState,
+  formData: FormData
+): Promise<RemoveMemberState> {
+  const admin_ = await requireSuperAdmin();
+  const userId = String(formData.get("user_id") ?? "");
+  const password = String(formData.get("password") ?? "");
+  if (!userId) return { error: "Missing member." };
+  if (userId === admin_.id) return { error: "You can't remove yourself." };
+  if (!password) return { error: "Enter your password to confirm." };
+
+  const supabase = await createClient();
+
+  const email = admin_.email ?? (await supabase.auth.getUser()).data.user?.email ?? null;
+  if (!email) return { error: "No email on file for this account." };
+  const { error: reauthError } = await supabase.auth.signInWithPassword({ email, password });
+  if (reauthError) return { error: "Incorrect password." };
+
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", userId)
+    .single();
+
+  if (!target) return { error: "Member not found." };
+  if (target.role === "super_admin") return { error: "Can't remove another admin." };
+  if (target.is_active) return { error: "Deactivate this member before removing them." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ removed_at: new Date().toISOString() })
+    .eq("id", userId);
+  if (error) return { error: "Could not remove the member." };
+
+  // Lock their login without deleting the auth user (deleting it would
+  // cascade-delete the profiles row and every record that references it).
+  const admin = createAdminClient();
+  await admin.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
+
+  revalidatePath("/members");
+  return undefined;
+}

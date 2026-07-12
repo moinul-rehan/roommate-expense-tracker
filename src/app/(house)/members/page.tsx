@@ -16,6 +16,7 @@ export default async function MembersPage() {
       .select(
         "id, first_name, last_name, avatar_url, role, room_label, is_active, email, mobile_number, hometown, address, can_add_expenses, can_add_bazaar, can_add_meals, can_add_deposit"
       )
+      .is("removed_at", null)
       .order("last_name"),
     getUpcomingBazaarDuties(supabase, profile.cottage_id),
   ]);

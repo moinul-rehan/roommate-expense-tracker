@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useActionState } from "react";
-import { ChevronDown, ShoppingBasket, X, Mail, Phone, MapPin, Home } from "lucide-react";
+import { ChevronDown, ShoppingBasket, X, Mail, Phone, MapPin, Home, UserX } from "lucide-react";
 import {
   setMemberActive,
   setCanAddExpenses,
@@ -11,6 +11,7 @@ import {
   setCanAddDeposit,
   assignBazaarDuty,
   removeBazaarDuty,
+  removeMember,
 } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmPasswordDialog } from "@/components/ConfirmPasswordDialog";
 import { getDisplayName } from "@/lib/data/display-name";
 import { VerifiedBadge } from "@/components/verified-badge";
 
@@ -200,10 +202,26 @@ export function MemberCard({
             size="sm"
             disabled={pending}
             onClick={() => startTransition(() => setMemberActive(member.id, !member.is_active))}
-            className="ml-auto"
+            className={isSelf || member.is_active ? "ml-auto" : ""}
           >
             {member.is_active ? "Deactivate" : "Activate"}
           </Button>
+
+          {!isSelf && !member.is_active && (
+            <ConfirmPasswordDialog
+              title={`Remove ${getDisplayName(member)}`}
+              warning={`This removes ${getDisplayName(member)} from the Members list and locks their login. Their past expenses, meals, deposits and statements are kept — nothing is deleted.`}
+              confirmLabel="Remove"
+              action={removeMember}
+              hiddenFields={{ user_id: member.id }}
+              renderTrigger={(open) => (
+                <Button variant="ghost" size="sm" className="ml-auto text-destructive hover:text-destructive" onClick={open}>
+                  <UserX />
+                  Remove
+                </Button>
+              )}
+            />
+          )}
         </div>
       )}
 

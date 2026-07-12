@@ -4,6 +4,7 @@ import {
   Zap,
   Users,
   CalendarRange,
+  Contact,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
@@ -32,6 +33,7 @@ const topLinks = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboar
 const bottomLinks = [
   { href: "/members", label: "Members", icon: Users },
   { href: "/months", label: "Months", icon: CalendarRange },
+  { href: "/contacts", label: "Contact", icon: Contact },
 ];
 
 export default async function HouseLayout({
