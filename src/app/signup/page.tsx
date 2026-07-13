@@ -2,7 +2,19 @@ import Link from "next/link";
 import { SignupForm } from "./SignupForm";
 import { Logo } from "@/components/logo";
 
-export default function SignupPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+  create_failed: "Could not create your Cottage from that Google account. Please try again.",
+  auth_failed: "Google sign-in failed. Please try again.",
+};
+
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+  const errorMessage = error ? (ERROR_MESSAGES[error] ?? "Something went wrong signing up. Please try again.") : null;
+
   return (
     <div className="flex min-h-svh w-full bg-background">
       <div className="flex w-full flex-col items-center justify-center gap-8 px-6 py-12 lg:w-[45%] lg:px-16">
@@ -17,6 +29,11 @@ export default function SignupPage() {
               Sign up for a new Cottage — you&apos;ll be its admin.
             </p>
           </div>
+          {errorMessage && (
+            <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {errorMessage}
+            </p>
+          )}
           <SignupForm />
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}

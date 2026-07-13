@@ -34,13 +34,18 @@ export async function GET(request: Request) {
               metadata.given_name ?? (metadata.full_name as string | undefined)?.split(" ")[0] ?? null;
             const lastName = metadata.family_name ?? null;
 
-            await supabase.rpc("create_cottage_for_current_user", {
+            const { error: createError } = await supabase.rpc("create_cottage_for_current_user", {
               p_cottage_name: cottageName,
               p_first_name: firstName,
               p_last_name: lastName,
             });
 
             cookieStore.delete("pending_cottage_name");
+
+            if (createError) {
+              await supabase.auth.signOut();
+              return NextResponse.redirect(`${origin}/signup?error=create_failed`);
+            }
           } else {
             // "Sign in as member" via Google, but no cottage membership exists.
             await supabase.auth.signOut();

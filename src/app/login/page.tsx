@@ -2,7 +2,19 @@ import Link from "next/link";
 import { LoginForm } from "./LoginForm";
 import { Logo } from "@/components/logo";
 
-export default function LoginPage() {
+const ERROR_MESSAGES: Record<string, string> = {
+  no_account: "No Cottage account found for that Google account. Ask your admin to invite you, or sign up to start a new Cottage.",
+  auth_failed: "Google sign-in failed. Please try again.",
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+  const errorMessage = error ? (ERROR_MESSAGES[error] ?? "Something went wrong signing in. Please try again.") : null;
+
   return (
     <div className="flex min-h-svh w-full bg-background">
       <div className="flex w-full flex-col items-center justify-center gap-8 px-6 py-12 lg:w-[45%] lg:px-16">
@@ -17,6 +29,11 @@ export default function LoginPage() {
               Sign in with the account your admin created for you.
             </p>
           </div>
+          {errorMessage && (
+            <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {errorMessage}
+            </p>
+          )}
           <LoginForm />
           <p className="text-center text-sm text-muted-foreground">
             Starting a new house?{" "}
