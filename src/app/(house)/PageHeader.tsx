@@ -5,6 +5,7 @@ import { MobileSidebarTrigger } from "./MobileSidebarTrigger";
 import { NotificationTray } from "./NotificationTray";
 import { ProfileMenu } from "./ProfileMenu";
 import { VerifiedBadge } from "@/components/verified-badge";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type Profile = {
   role: "super_admin" | "member";
@@ -43,23 +44,25 @@ export function PageHeader({
 
   return (
     <header className="sticky top-0 z-20 flex flex-col gap-3 bg-background px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-8 sm:py-6">
-      <div className="flex items-center justify-between gap-3 sm:hidden">
-        <MobileSidebarTrigger />
-        {isDashboard && (
-          <div className="flex shrink-0 items-center gap-2.5">
-            <NotificationTray notifications={notifications} unreadCount={unreadCount} />
-            <ProfileMenu
-              name={displayName}
-              avatarUrl={profile.avatar_url}
-              initial={profile.first_name[0]?.toUpperCase() ?? "?"}
-            />
-          </div>
-        )}
-      </div>
+      <div className="flex min-w-0 items-center gap-3">
+        <SidebarTrigger className="hidden shrink-0 md:inline-flex" />
 
-      {isDashboard && (
-        <>
-          <div className="flex min-w-0 flex-col leading-tight">
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 sm:hidden">
+          <MobileSidebarTrigger />
+          {isDashboard && (
+            <div className="flex shrink-0 items-center gap-2.5">
+              <NotificationTray notifications={notifications} unreadCount={unreadCount} />
+              <ProfileMenu
+                name={displayName}
+                avatarUrl={profile.avatar_url}
+                initial={profile.first_name[0]?.toUpperCase() ?? "?"}
+              />
+            </div>
+          )}
+        </div>
+
+        {isDashboard && (
+          <div className="hidden min-w-0 flex-col leading-tight sm:flex">
             <span className="flex items-center gap-1.5 truncate text-xl font-bold text-foreground sm:text-2xl">
               Welcome, {displayName}
               <VerifiedBadge
@@ -73,16 +76,18 @@ export function PageHeader({
               Here&apos;s where things stand for {monthLabel}.
             </span>
           </div>
+        )}
+      </div>
 
-          <div className="hidden shrink-0 items-center gap-2.5 sm:flex">
-            <NotificationTray notifications={notifications} unreadCount={unreadCount} />
-            <ProfileMenu
-              name={displayName}
-              avatarUrl={profile.avatar_url}
-              initial={profile.first_name[0]?.toUpperCase() ?? "?"}
-            />
-          </div>
-        </>
+      {isDashboard && (
+        <div className="hidden shrink-0 items-center gap-2.5 sm:flex">
+          <NotificationTray notifications={notifications} unreadCount={unreadCount} />
+          <ProfileMenu
+            name={displayName}
+            avatarUrl={profile.avatar_url}
+            initial={profile.first_name[0]?.toUpperCase() ?? "?"}
+          />
+        </div>
       )}
     </header>
   );
