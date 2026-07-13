@@ -12,6 +12,8 @@ import {
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DashboardMockup } from "@/components/marketing/DashboardMockup";
+import { StatementMockup } from "@/components/marketing/StatementMockup";
 
 const FEATURES = [
   {
@@ -120,6 +122,9 @@ export default function LandingPage() {
               Free to use. No credit card. Set up your house in under a minute.
             </p>
           </div>
+          <div className="mx-auto w-full max-w-3xl px-6 pb-16 sm:pb-24">
+            <DashboardMockup />
+          </div>
         </section>
 
         {/* Features */}
@@ -143,6 +148,40 @@ export default function LandingPage() {
                 <p className="text-sm text-muted-foreground">{f.description}</p>
               </Card>
             ))}
+          </div>
+        </section>
+
+        {/* Statement showcase */}
+        <section className="mx-auto w-full max-w-6xl px-6 pb-16 sm:pb-20">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            <div className="order-2 flex flex-col gap-4 lg:order-1">
+              <div className="flex w-fit items-center gap-2 rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
+                Generate Utility Statement
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Every taka, accounted for
+              </h2>
+              <p className="text-muted-foreground">
+                No more single mystery totals. Every member gets a full category-by-category
+                breakdown — rent, bills, meal carry-in, discounts, advance payments — so
+                settling up is a formality, not a negotiation.
+              </p>
+              <ul className="flex flex-col gap-2 text-sm text-foreground">
+                {[
+                  "Split equally or assign a custom amount per member",
+                  "Discounts and advance payments show up as clear +/− lines",
+                  "Remaining Due or Advance Balance, always up to date",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="order-1 lg:order-2">
+              <StatementMockup />
+            </div>
           </div>
         </section>
 
