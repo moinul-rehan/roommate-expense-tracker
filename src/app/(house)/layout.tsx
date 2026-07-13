@@ -25,7 +25,6 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 
 const topLinks = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }];
@@ -54,23 +53,23 @@ export default async function HouseLayout({
     <SidebarProvider className="min-h-0 flex-1 bg-background">
       <Sidebar collapsible="icon" className="border-none">
         <SidebarHeader className="gap-14 px-3 py-8">
-          <div className="flex items-center justify-between px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-            <div className="flex items-center gap-2">
-              <Logo size={32} />
-              <span className="text-2xl font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
-                Cottage
-              </span>
-            </div>
-            <SidebarTrigger />
+          <div className="flex items-center gap-2 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+            <Logo size={32} />
+            <span className="text-2xl font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
+              Cottage
+            </span>
           </div>
         </SidebarHeader>
-        <SidebarContent className="gap-10 px-3">
-          <SidebarMenu className="gap-2.5">
+        <SidebarContent className="gap-6 px-3">
+          <SidebarMenu className="gap-1">
             {topLinks.map((link) => (
               <SidebarMenuItem key={link.href}>
                 <SidebarNavLink href={link.href} label={link.label} icon={<link.icon />} />
               </SidebarMenuItem>
             ))}
+          </SidebarMenu>
+
+          <SidebarMenu className="gap-1">
             <SidebarMenuItem>
               <div className="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/60 group-data-[collapsible=icon]:justify-center">
                 <UtensilsCrossed className="size-4" />
@@ -84,6 +83,9 @@ export default async function HouseLayout({
               canAddMeals={profile.role === "super_admin" || profile.can_add_meals}
               canAddDeposit={profile.role === "super_admin" || profile.can_add_deposit}
             />
+          </SidebarMenu>
+
+          <SidebarMenu className="gap-1">
             <SidebarMenuItem>
               <div className="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/60 group-data-[collapsible=icon]:justify-center">
                 <Zap className="size-4" />
@@ -95,6 +97,9 @@ export default async function HouseLayout({
               defaultDate={defaultDate}
               isSuperAdmin={profile.role === "super_admin"}
             />
+          </SidebarMenu>
+
+          <SidebarMenu className="gap-1">
             {bottomLinks.map((link) => (
               <SidebarMenuItem key={link.href}>
                 <SidebarNavLink href={link.href} label={link.label} icon={<link.icon />} />
