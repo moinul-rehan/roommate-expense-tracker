@@ -10,9 +10,9 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; detail?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, detail } = await searchParams;
   const errorMessage = error ? (ERROR_MESSAGES[error] ?? "Something went wrong signing up. Please try again.") : null;
 
   return (
@@ -32,6 +32,9 @@ export default async function SignupPage({
           {errorMessage && (
             <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {errorMessage}
+              {detail && (
+                <span className="mt-1 block font-mono text-xs opacity-80">{detail}</span>
+              )}
             </p>
           )}
           <SignupForm />

@@ -43,8 +43,10 @@ export async function GET(request: Request) {
             cookieStore.delete("pending_cottage_name");
 
             if (createError) {
+              console.error("create_cottage_for_current_user failed:", createError);
               await supabase.auth.signOut();
-              return NextResponse.redirect(`${origin}/signup?error=create_failed`);
+              const detail = encodeURIComponent(createError.message);
+              return NextResponse.redirect(`${origin}/signup?error=create_failed&detail=${detail}`);
             }
           } else {
             // "Sign in as member" via Google, but no cottage membership exists.
