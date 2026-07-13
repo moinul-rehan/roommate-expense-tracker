@@ -29,18 +29,29 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const publicRoutePrefixes = ['/login', '/signup', '/auth/callback']
-  const isPublicRoute = publicRoutePrefixes.some((prefix) =>
-    request.nextUrl.pathname.startsWith(prefix)
-  )
+  const pathname = request.nextUrl.pathname
 
-  if (!user && !isPublicRoute) {
+  // The marketing landing page and the password-reset page are reachable
+  // regardless of auth state — reset-password in particular because
+  // completing a reset link creates a short-lived recovery session, which
+  // would otherwise get bounced straight to /dashboard before the user can
+  // set their new password.
+  const alwaysAccessible = pathname === '/' || pathname.startsWith('/reset-password')
+
+  const guestOnlyPrefixes = ['/login', '/signup', '/forgot-password', '/auth/callback']
+  const isGuestOnlyRoute = guestOnlyPrefixes.some((prefix) => pathname.startsWith(prefix))
+
+  if (alwaysAccessible) {
+    return response
+  }
+
+  if (!user && !isGuestOnlyRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && isPublicRoute) {
+  if (user && isGuestOnlyRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
