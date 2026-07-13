@@ -6,7 +6,7 @@ import { ListTree, FileText, Wallet, HandCoins, History } from "lucide-react";
 import { MemberDepositForm } from "./utilities/MemberDepositForm";
 import { CottageDepositForm } from "./utilities/CottageDepositForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 
 type Member = { id: string; first_name: string; last_name: string | null };
 
@@ -27,44 +27,58 @@ export function UtilitiesQuickAddMenu({
     setOpen(dialog);
   }
 
+  const itemClass = "gap-3 rounded-full px-3 py-2.5 font-normal text-sidebar-foreground";
+
   return (
-    <SidebarMenuSub>
-      <SidebarMenuSubItem>
-        <SidebarMenuSubButton render={<Link href="/utilities" onClick={() => setOpenMobile(false)} />}>
+    <>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          render={<Link href="/utilities" onClick={() => setOpenMobile(false)} />}
+          tooltip="Utility Details"
+          className={itemClass}
+        >
           <ListTree />
           <span className="truncate">Utility Details</span>
-        </SidebarMenuSubButton>
-      </SidebarMenuSubItem>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
       {isSuperAdmin && (
-        <SidebarMenuSubItem>
-          <SidebarMenuSubButton render={<Link href="/utilities/statement" onClick={() => setOpenMobile(false)} />}>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            render={<Link href="/utilities/statement" onClick={() => setOpenMobile(false)} />}
+            tooltip="Utility Statements"
+            className={itemClass}
+          >
             <FileText />
             <span className="truncate">Utility Statements</span>
-          </SidebarMenuSubButton>
-        </SidebarMenuSubItem>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
       )}
       {isSuperAdmin && (
-        <SidebarMenuSubItem>
-          <SidebarMenuSubButton onClick={() => go("member-deposit")}>
+        <SidebarMenuItem>
+          <SidebarMenuButton onClick={() => go("member-deposit")} tooltip="Member Deposit" className={itemClass}>
             <Wallet />
             <span className="truncate">Member Deposit</span>
-          </SidebarMenuSubButton>
-        </SidebarMenuSubItem>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
       )}
       {isSuperAdmin && (
-        <SidebarMenuSubItem>
-          <SidebarMenuSubButton onClick={() => go("cottage-deposit")}>
+        <SidebarMenuItem>
+          <SidebarMenuButton onClick={() => go("cottage-deposit")} tooltip="Cottage Deposit" className={itemClass}>
             <HandCoins />
             <span className="truncate">Cottage Deposit</span>
-          </SidebarMenuSubButton>
-        </SidebarMenuSubItem>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
       )}
-      <SidebarMenuSubItem>
-        <SidebarMenuSubButton render={<Link href="/utilities/history" onClick={() => setOpenMobile(false)} />}>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          render={<Link href="/utilities/history" onClick={() => setOpenMobile(false)} />}
+          tooltip="Utility History"
+          className={itemClass}
+        >
           <History />
           <span className="truncate">Utility History</span>
-        </SidebarMenuSubButton>
-      </SidebarMenuSubItem>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
 
       <Dialog open={open === "member-deposit"} onOpenChange={(v) => !v && setOpen(null)}>
         <DialogContent>
@@ -87,6 +101,6 @@ export function UtilitiesQuickAddMenu({
           </div>
         </DialogContent>
       </Dialog>
-    </SidebarMenuSub>
+    </>
   );
 }

@@ -24,6 +24,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
@@ -54,9 +55,11 @@ export default async function HouseLayout({
       <Sidebar collapsible="icon" className="border-none">
         <SidebarHeader className="gap-14 px-3 py-8">
           <div className="flex items-center justify-between px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-            <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
+            <div className="flex items-center gap-2">
               <Logo size={32} />
-              <span className="text-2xl font-bold tracking-tight text-foreground">Cottage</span>
+              <span className="text-2xl font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
+                Cottage
+              </span>
             </div>
             <SidebarTrigger />
           </div>
@@ -73,25 +76,25 @@ export default async function HouseLayout({
                 <UtensilsCrossed className="size-4" />
                 <span className="group-data-[collapsible=icon]:hidden">Meal</span>
               </div>
-              <MealQuickAddMenu
-                members={members ?? []}
-                defaultDate={defaultDate}
-                canAddBazaar={profile.role === "super_admin" || profile.can_add_bazaar}
-                canAddMeals={profile.role === "super_admin" || profile.can_add_meals}
-                canAddDeposit={profile.role === "super_admin" || profile.can_add_deposit}
-              />
             </SidebarMenuItem>
+            <MealQuickAddMenu
+              members={members ?? []}
+              defaultDate={defaultDate}
+              canAddBazaar={profile.role === "super_admin" || profile.can_add_bazaar}
+              canAddMeals={profile.role === "super_admin" || profile.can_add_meals}
+              canAddDeposit={profile.role === "super_admin" || profile.can_add_deposit}
+            />
             <SidebarMenuItem>
               <div className="flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-semibold text-sidebar-foreground/60 group-data-[collapsible=icon]:justify-center">
                 <Zap className="size-4" />
                 <span className="group-data-[collapsible=icon]:hidden">Utilities</span>
               </div>
-              <UtilitiesQuickAddMenu
-                members={members ?? []}
-                defaultDate={defaultDate}
-                isSuperAdmin={profile.role === "super_admin"}
-              />
             </SidebarMenuItem>
+            <UtilitiesQuickAddMenu
+              members={members ?? []}
+              defaultDate={defaultDate}
+              isSuperAdmin={profile.role === "super_admin"}
+            />
             {bottomLinks.map((link) => (
               <SidebarMenuItem key={link.href}>
                 <SidebarNavLink href={link.href} label={link.label} icon={<link.icon />} />
@@ -103,6 +106,7 @@ export default async function HouseLayout({
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
+      <SidebarRail />
       <SidebarInset className="bg-background">
         <PageHeader
           profile={profile}
