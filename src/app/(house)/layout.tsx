@@ -11,13 +11,11 @@ import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import { getUnreadCount, getNotifications } from "@/lib/data/notifications";
 import { getActiveMonthKey, defaultDateForMonth, formatMonthKey } from "@/lib/data/months";
-import { VerifiedBadge } from "@/components/verified-badge";
 import { MealQuickAddMenu } from "./MealQuickAddMenu";
 import { UtilitiesQuickAddMenu } from "./UtilitiesQuickAddMenu";
 import { SidebarNavLink } from "./SidebarNavLink";
-import { NotificationTray } from "./NotificationTray";
-import { ProfileMenu } from "./ProfileMenu";
-import { MobileSidebarTrigger } from "./MobileSidebarTrigger";
+import { PageHeader } from "./PageHeader";
+import { Logo } from "@/components/logo";
 import {
   Sidebar,
   SidebarContent,
@@ -56,10 +54,13 @@ export default async function HouseLayout({
       <Sidebar collapsible="icon" className="border-none">
         <SidebarHeader className="gap-14 px-3 py-8">
           <div className="flex items-center justify-between px-2">
-            <span className="text-2xl font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
-              Cottage
-            </span>
-            <SidebarTrigger />
+            <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+              <Logo size={32} />
+              <span className="text-2xl font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
+                Cottage
+              </span>
+            </div>
+            <SidebarTrigger className="group-data-[collapsible=icon]:hidden" />
           </div>
         </SidebarHeader>
         <SidebarContent className="gap-10 px-3">
@@ -105,43 +106,13 @@ export default async function HouseLayout({
         </SidebarContent>
       </Sidebar>
       <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-20 flex flex-col gap-3 border-b border-border bg-background px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-8 sm:py-6">
-          <div className="flex items-center justify-between gap-3 sm:hidden">
-            <MobileSidebarTrigger />
-            <div className="flex shrink-0 items-center gap-2.5">
-              <NotificationTray notifications={notifications} unreadCount={unreadCount} />
-              <ProfileMenu
-                name={getDisplayName(profile)}
-                avatarUrl={profile.avatar_url}
-                initial={profile.first_name[0]?.toUpperCase() ?? "?"}
-              />
-            </div>
-          </div>
-
-          <div className="flex min-w-0 flex-col leading-tight">
-            <span className="flex items-center gap-1.5 truncate text-xl font-bold text-foreground sm:text-2xl">
-              Welcome, {getDisplayName(profile)}
-              <VerifiedBadge
-                role={profile.role}
-                can_add_expenses={profile.can_add_expenses}
-                can_add_bazaar={profile.can_add_bazaar}
-                can_add_meals={profile.can_add_meals}
-              />
-            </span>
-            <span className="truncate text-sm text-muted-foreground">
-              Here&apos;s where things stand for {formatMonthKey(activeMonthKey)}.
-            </span>
-          </div>
-
-          <div className="hidden shrink-0 items-center gap-2.5 sm:flex">
-            <NotificationTray notifications={notifications} unreadCount={unreadCount} />
-            <ProfileMenu
-              name={getDisplayName(profile)}
-              avatarUrl={profile.avatar_url}
-              initial={profile.first_name[0]?.toUpperCase() ?? "?"}
-            />
-          </div>
-        </header>
+        <PageHeader
+          profile={profile}
+          displayName={getDisplayName(profile)}
+          monthLabel={formatMonthKey(activeMonthKey)}
+          notifications={notifications}
+          unreadCount={unreadCount}
+        />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-8 sm:px-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>

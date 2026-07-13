@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { SignupForm } from "./SignupForm";
+import { Logo } from "@/components/logo";
 
 export default function SignupPage() {
   return (
     <div className="flex min-h-svh w-full bg-background">
       <div className="flex w-full flex-col items-center justify-center gap-8 px-6 py-12 lg:w-[45%] lg:px-16">
         <div className="flex w-full max-w-sm flex-col gap-8">
-          <div className="text-2xl font-bold tracking-tight text-foreground">Cottage</div>
+          <div className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
+            <Logo size={32} />
+            Cottage
+          </div>
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Start a Cottage</h1>
             <p className="text-sm text-muted-foreground">
