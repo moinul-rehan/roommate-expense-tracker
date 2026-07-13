@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GoogleIcon } from "@/components/google-icon";
 
 export function SignupForm() {
   const [state, action, pending] = useActionState(signup, undefined);
@@ -88,9 +89,10 @@ export function SignupForm() {
       <Button
         type="button"
         variant="outline"
-        className="h-12 w-full rounded-full text-base"
+        className="h-12 w-full gap-2.5 rounded-full text-base"
         onClick={handleGoogleSignup}
       >
+        <GoogleIcon className="size-5" />
         Continue with Google
       </Button>
     </div>

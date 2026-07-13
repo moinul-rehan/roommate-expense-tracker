@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GoogleIcon } from "@/components/google-icon";
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(login, undefined);
@@ -34,12 +35,7 @@ export function LoginForm() {
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
+          <Label htmlFor="password">Password</Label>
           <Input
             id="password"
             name="password"
@@ -48,6 +44,12 @@ export function LoginForm() {
             autoComplete="current-password"
             className="h-12 rounded-2xl px-4 text-base"
           />
+          <Link
+            href="/forgot-password"
+            className="self-end text-xs font-medium text-primary hover:underline"
+          >
+            Forgot password?
+          </Link>
         </div>
         {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
         <Button type="submit" disabled={pending} className="mt-2 h-12 w-full rounded-full text-base">
@@ -67,9 +69,10 @@ export function LoginForm() {
       <Button
         type="button"
         variant="outline"
-        className="h-12 w-full rounded-full text-base"
+        className="h-12 w-full gap-2.5 rounded-full text-base"
         onClick={handleGoogleLogin}
       >
+        <GoogleIcon className="size-5" />
         Continue with Google
       </Button>
     </div>
