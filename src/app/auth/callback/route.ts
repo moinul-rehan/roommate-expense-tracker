@@ -5,13 +5,23 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const mode = searchParams.get("mode") === "create_cottage" ? "create_cottage" : "login";
+  const rawMode = searchParams.get("mode");
+  const mode = rawMode === "create_cottage" ? "create_cottage" : rawMode === "recovery" ? "recovery" : "login";
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      // Password recovery: the code exchange above is the whole point (it's
+      // what actually persists the session cookie — a Server Component
+      // can't set cookies, so exchanging the code inside /reset-password's
+      // page itself would silently fail to keep the session past that
+      // first render). No profile/cottage logic applies here.
+      if (mode === "recovery") {
+        return NextResponse.redirect(`${origin}/reset-password`);
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();

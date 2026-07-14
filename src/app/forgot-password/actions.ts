@@ -23,7 +23,7 @@ export async function requestPasswordReset(
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? (await headers()).get("origin") ?? "";
 
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/reset-password`,
+    redirectTo: `${origin}/auth/callback?mode=recovery`,
   });
 
   // Always return success, whether or not the email exists — avoids

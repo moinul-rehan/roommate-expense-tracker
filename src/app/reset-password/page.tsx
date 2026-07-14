@@ -3,24 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 import { Logo } from "@/components/logo";
 
-export default async function ResetPasswordPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ code?: string }>;
-}) {
-  const { code } = await searchParams;
+export default async function ResetPasswordPage() {
   const supabase = await createClient();
-
-  let linkValid = false;
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    linkValid = !error;
-  } else {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    linkValid = !!user;
-  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const linkValid = !!user;
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center bg-background px-6 py-12">
