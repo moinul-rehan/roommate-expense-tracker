@@ -15,7 +15,12 @@ export async function requestPasswordReset(
   }
 
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  // Prefer an explicit site URL (must match an entry in Supabase's Auth →
+  // URL Configuration → Redirect URLs allow list exactly, including this
+  // path) over the request's Origin header, since Supabase silently falls
+  // back to its bare Site URL — dropping the /reset-password path — for
+  // any redirectTo that isn't on that allow list.
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? (await headers()).get("origin") ?? "";
 
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/reset-password`,
