@@ -10,6 +10,7 @@ import {
 } from "@/lib/data/meal";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -19,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { Download } from "lucide-react";
 import { EditMealRowDialog } from "./EditMealRowDialog";
 import { EditDepositDialog } from "./EditDepositDialog";
 import { EditBazaarDialog } from "./EditBazaarDialog";
@@ -73,11 +75,22 @@ export default async function MealMonthDetailsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Month Details — {monthKey}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Full meal, deposit and cost records for every member in the active month.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Month Details — {monthKey}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Full meal, deposit and cost records for every member in the active month.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          nativeButton={false}
+          render={<a href="/meal/month-details/pdf" download />}
+          className="shrink-0 gap-1.5"
+        >
+          <Download className="size-4" />
+          Download PDF
+        </Button>
       </div>
 
       <div className="inline-flex w-fit gap-1 rounded-lg border p-1">
