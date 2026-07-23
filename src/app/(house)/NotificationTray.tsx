@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { markNotificationRead } from "./notifications/actions";
 import { getNotificationIcon } from "./notification-icons";
+import { formatDateTime } from "@/lib/format-date";
 
 type Notification = {
   id: string;
@@ -76,7 +77,7 @@ export function NotificationTray({
                   </div>
                   {n.body && <p className="text-xs text-muted-foreground">{n.body}</p>}
                   <p className="text-xs text-muted-foreground/70">
-                    {new Date(n.created_at).toLocaleString()}
+                    {formatDateTime(n.created_at)}
                   </p>
                 </div>
               </div>

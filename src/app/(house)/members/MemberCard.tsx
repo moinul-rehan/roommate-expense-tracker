@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { formatDate } from "@/lib/format-date";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -233,10 +234,6 @@ export function MemberCard({
       />
     </Card>
   );
-}
-
-function formatDate(iso: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function AssignDutyDialog({

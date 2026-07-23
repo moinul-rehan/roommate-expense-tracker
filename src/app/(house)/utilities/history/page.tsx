@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 
 const TABS = [
   { value: "expense", label: "Expense History" },
@@ -82,7 +83,7 @@ export default async function UtilityHistoryPage({
             <TableBody>
               {expenses.map((e) => (
                 <TableRow key={e.id}>
-                  <TableCell className="text-muted-foreground">{e.expense_date}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatDate(e.expense_date)}</TableCell>
                   <TableCell className="text-muted-foreground">{UTILITY_CATEGORY_LABELS[e.category] ?? e.category}</TableCell>
                   <TableCell className="text-muted-foreground">{e.description ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">
@@ -124,7 +125,7 @@ export default async function UtilityHistoryPage({
                 return (
                   <TableRow key={d.id}>
                     <TableCell className="text-muted-foreground">{member ? getDisplayName(member) : "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{d.deposit_date}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(d.deposit_date)}</TableCell>
                     <TableCell className="text-muted-foreground">{d.note ?? "—"}</TableCell>
                     <TableCell className="text-right font-medium">{d.amount.toFixed(2)}</TableCell>
                   </TableRow>

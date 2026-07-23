@@ -5,6 +5,7 @@ import { requireSuperAdmin } from "@/lib/data/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { notifyUsers } from "@/lib/data/notifications";
+import { formatDate } from "@/lib/format-date";
 
 export type InviteMemberState = { error?: string; success?: string } | undefined;
 
@@ -144,10 +145,6 @@ export async function assignBazaarDuty(
   revalidatePath("/members");
   revalidatePath("/dashboard");
   return { success: "Bazaar duty assigned." };
-}
-
-function formatDate(iso: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export async function removeBazaarDuty(dutyId: string) {

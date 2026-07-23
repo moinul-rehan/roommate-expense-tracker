@@ -5,6 +5,7 @@ import { Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getDisplayName } from "@/lib/data/display-name";
+import { formatDate } from "@/lib/format-date";
 
 type Member = { first_name: string; last_name: string | null } | null;
 
@@ -34,7 +35,7 @@ export function ViewBazaarDialog({
         <div className="flex flex-col gap-3 p-4 pt-2 text-sm">
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Date</span>
-            <span className="font-medium text-foreground">{entryDate}</span>
+            <span className="font-medium text-foreground">{formatDate(entryDate)}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Spent by</span>

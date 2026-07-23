@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentProfile, getDisplayName } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveMonthKey } from "@/lib/data/months";
+import { getActiveMonthKey, formatMonthKey } from "@/lib/data/months";
 import {
   getDailyMealRecords,
   getDepositRecords,
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 import { Download } from "lucide-react";
 import { EditMealRowDialog } from "./EditMealRowDialog";
 import { EditDepositDialog } from "./EditDepositDialog";
@@ -77,7 +78,7 @@ export default async function MealMonthDetailsPage({
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Month Details — {monthKey}</h1>
+          <h1 className="text-xl font-semibold text-foreground">Month Details — {formatMonthKey(monthKey)}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Full meal, deposit and cost records for every member in the active month.
           </p>
@@ -127,7 +128,7 @@ export default async function MealMonthDetailsPage({
             <TableBody>
               {pivotRows.map((row) => (
                 <TableRow key={row.date}>
-                  <TableCell className="text-muted-foreground">{row.date}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatDate(row.date)}</TableCell>
                   {row.counts.map((count, i) => (
                     <TableCell key={memberList[i].id} className="text-right font-medium">
                       {count || "—"}
@@ -181,7 +182,7 @@ export default async function MealMonthDetailsPage({
             <TableBody>
               {depositRecords.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell className="text-muted-foreground">{r.deposit_date}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatDate(r.deposit_date)}</TableCell>
                   <TableCell className="text-foreground">
                     <MemberCell member={r.member} />
                   </TableCell>
@@ -226,7 +227,7 @@ export default async function MealMonthDetailsPage({
             <TableBody>
               {bazaarRecords.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell className="text-muted-foreground">{r.entry_date}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatDate(r.entry_date)}</TableCell>
                   <TableCell className="text-foreground">
                     <MemberCell member={r.member} />
                   </TableCell>

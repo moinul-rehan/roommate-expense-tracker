@@ -7,6 +7,7 @@ import { MonthActionButtons } from "./MonthActionButtons";
 import { SetActiveMonthCard } from "./SetActiveMonthCard";
 import { ActivateMonthButton } from "../history/ActivateMonthButton";
 import { DeleteMonthButton } from "../history/DeleteMonthButton";
+import { formatDate } from "@/lib/format-date";
 
 export default async function MonthsPage() {
   const profile = await getCurrentProfile();
@@ -78,7 +79,7 @@ export default async function MonthsPage() {
             <Card key={m.monthKey}>
               <CardHeader>
                 <CardDescription className="text-xs font-medium tracking-wide uppercase">
-                  Locked {m.closedAt ? new Date(m.closedAt).toLocaleDateString() : ""}
+                  Locked {m.closedAt ? formatDate(new Date(m.closedAt)) : ""}
                 </CardDescription>
                 <CardTitle className="text-xl font-semibold">{formatMonthKey(m.monthKey)}</CardTitle>
               </CardHeader>

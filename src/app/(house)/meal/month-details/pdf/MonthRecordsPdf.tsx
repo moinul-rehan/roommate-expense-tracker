@@ -1,4 +1,17 @@
-import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
+import path from "node:path";
+import { Document, Page, View, Text, Image, StyleSheet, Font } from "@react-pdf/renderer";
+import { formatDate } from "@/lib/format-date";
+import { formatMonthKey } from "@/lib/data/months";
+
+const LOGO_PATH = path.join(process.cwd(), "public", "logo.png");
+
+Font.register({
+  family: "Noto Sans Bengali",
+  fonts: [
+    { src: path.join(process.cwd(), "public", "fonts", "NotoSansBengali-Regular.ttf"), fontWeight: "normal" },
+    { src: path.join(process.cwd(), "public", "fonts", "NotoSansBengali-Bold.ttf"), fontWeight: "bold" },
+  ],
+});
 
 const COLORS = {
   primary: "#DE7356",
@@ -9,8 +22,10 @@ const COLORS = {
 };
 
 const styles = StyleSheet.create({
-  page: { padding: 32, fontSize: 9, color: COLORS.foreground, fontFamily: "Helvetica" },
-  brand: { fontSize: 14, fontWeight: 700, color: COLORS.primary, marginBottom: 2 },
+  page: { padding: 32, fontSize: 9, color: COLORS.foreground, fontFamily: "Noto Sans Bengali" },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+  logo: { width: 24, height: 24, borderRadius: 6 },
+  brand: { fontSize: 14, fontWeight: 700, color: COLORS.primary },
   title: { fontSize: 16, fontWeight: 700, marginBottom: 2 },
   subtitle: { fontSize: 9, color: COLORS.muted, marginBottom: 16 },
   section: { marginBottom: 20 },
@@ -53,6 +68,15 @@ function displayName(m: { first_name: string; last_name: string | null }) {
   return [m.first_name, m.last_name].filter(Boolean).join(" ");
 }
 
+function BrandHeader() {
+  return (
+    <View style={styles.brandRow}>
+      <Image src={LOGO_PATH} style={styles.logo} />
+      <Text style={styles.brand}>Cottage</Text>
+    </View>
+  );
+}
+
 export function MonthRecordsPdf({
   monthKey,
   summaryRows,
@@ -76,8 +100,8 @@ export function MonthRecordsPdf({
     <Document>
       {/* Page 1 — Summary + Meal Records */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.brand}>Cottage</Text>
-        <Text style={styles.title}>Month Records — {monthKey}</Text>
+        <BrandHeader />
+        <Text style={styles.title}>Month Records — {formatMonthKey(monthKey)}</Text>
         <Text style={styles.subtitle}>
           Meal rate: {mealRate.toFixed(2)} tk/meal · Generated for every member of the cottage
         </Text>
@@ -117,7 +141,7 @@ export function MonthRecordsPdf({
             </View>
             {pivotRows.map((row) => (
               <View style={styles.row} key={row.date}>
-                <Text style={styles.cell}>{row.date}</Text>
+                <Text style={styles.cell}>{formatDate(row.date)}</Text>
                 {row.counts.map((c, i) => (
                   <Text style={styles.cellRight} key={memberNames[i]}>
                     {c || "—"}
@@ -148,7 +172,8 @@ export function MonthRecordsPdf({
 
       {/* Page 2 — Deposit Records */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Deposit Records — {monthKey}</Text>
+        <BrandHeader />
+        <Text style={styles.title}>Deposit Records — {formatMonthKey(monthKey)}</Text>
         <View style={styles.section}>
           <View style={styles.table}>
             <View style={styles.headerRow}>
@@ -159,7 +184,7 @@ export function MonthRecordsPdf({
             </View>
             {depositRecords.map((r) => (
               <View style={styles.row} key={r.id}>
-                <Text style={styles.cell}>{r.deposit_date}</Text>
+                <Text style={styles.cell}>{formatDate(r.deposit_date)}</Text>
                 <Text style={styles.cell}>{name(r.member)}</Text>
                 <Text style={styles.cell}>{r.note ?? "—"}</Text>
                 <Text style={styles.cellRight}>{Number(r.amount).toFixed(2)} tk</Text>
@@ -177,7 +202,8 @@ export function MonthRecordsPdf({
 
       {/* Page 3 — Meal Cost (Bazaar) Records */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Meal Cost Records — {monthKey}</Text>
+        <BrandHeader />
+        <Text style={styles.title}>Meal Cost Records — {formatMonthKey(monthKey)}</Text>
         <View style={styles.section}>
           <View style={styles.table}>
             <View style={styles.headerRow}>
@@ -188,7 +214,7 @@ export function MonthRecordsPdf({
             </View>
             {bazaarRecords.map((r) => (
               <View style={styles.row} key={r.id}>
-                <Text style={styles.cell}>{r.entry_date}</Text>
+                <Text style={styles.cell}>{formatDate(r.entry_date)}</Text>
                 <Text style={styles.cell}>{name(r.member)}</Text>
                 <Text style={styles.cell}>{r.description ?? "—"}</Text>
                 <Text style={styles.cellRight}>{Number(r.amount).toFixed(2)} tk</Text>

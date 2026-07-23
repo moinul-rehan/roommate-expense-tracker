@@ -6,6 +6,7 @@ import { getActiveMonthKey } from "@/lib/data/months";
 import { getMemberMealSummary } from "@/lib/data/meal";
 import { getMyNextBazaarDuty } from "@/lib/data/bazaar-duty";
 import { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
+import { formatDate } from "@/lib/format-date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -257,7 +258,5 @@ export default async function DashboardPage() {
 }
 
 function formatDutyRange(startIso: string, endIso: string) {
-  const fmt = (iso: string) =>
-    new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${fmt(startIso)} – ${fmt(endIso)}`;
+  return `${formatDate(startIso)} – ${formatDate(endIso)}`;
 }
