@@ -4,33 +4,6 @@ import { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
 
 export { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
 
-/** Returns the latest rent_assignment per user (most recent effective_from wins). */
-export async function getCurrentRents(supabase: SupabaseClient) {
-  const { data } = await supabase
-    .from("rent_assignments")
-    .select("id, user_id, monthly_rent_amount, effective_from, notes")
-    .order("effective_from", { ascending: false })
-    .order("created_at", { ascending: false });
-
-  const currentByUser = new Map<
-    string,
-    { id: string; monthly_rent_amount: number; effective_from: string; notes: string | null }
-  >();
-
-  for (const row of data ?? []) {
-    if (!currentByUser.has(row.user_id)) {
-      currentByUser.set(row.user_id, {
-        id: row.id,
-        monthly_rent_amount: row.monthly_rent_amount,
-        effective_from: row.effective_from,
-        notes: row.notes,
-      });
-    }
-  }
-
-  return currentByUser;
-}
-
 export function monthRange(monthKey: string) {
   // monthKey: "YYYY-MM"
   const [year, month] = monthKey.split("-").map(Number);

@@ -13,9 +13,7 @@ import { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
 
 type Member = { id: string; first_name: string; last_name: string | null };
 
-const CATEGORY_OPTIONS = Object.entries(UTILITY_CATEGORY_LABELS).filter(
-  ([value]) => value !== "house_rent" && value !== "other"
-);
+const CATEGORY_OPTIONS = Object.entries(UTILITY_CATEGORY_LABELS).filter(([value]) => value !== "other");
 
 export function DefaultCostForm({ members }: { members: Member[] }) {
   const [open, setOpen] = useState(false);
