@@ -47,14 +47,36 @@ export async function saveDefaultCost(
   return undefined;
 }
 
-export async function deleteDefaultCostCategory(category: string) {
+export type DeleteDefaultCostState = { error?: string } | undefined;
+
+export async function deleteDefaultCostCategory(
+  _prevState: DeleteDefaultCostState,
+  formData: FormData
+): Promise<DeleteDefaultCostState> {
   const admin = await requireSuperAdmin();
   const supabase = await createClient();
-  await supabase
+
+  const category = String(formData.get("category") ?? "");
+  const password = String(formData.get("password") ?? "");
+
+  if (!category) return { error: "Missing category." };
+  if (!password) return { error: "Enter your password to confirm." };
+
+  const email = admin.email ?? (await supabase.auth.getUser()).data.user?.email ?? null;
+  if (!email) return { error: "No email on file for this account." };
+
+  const { error: reauthError } = await supabase.auth.signInWithPassword({ email, password });
+  if (reauthError) return { error: "Incorrect password." };
+
+  const { error } = await supabase
     .from("default_costs")
     .delete()
     .eq("cottage_id", admin.cottage_id)
     .eq("category", category);
+
+  if (error) return { error: "Could not delete that default cost." };
+
   revalidatePath("/settings/rent");
   revalidatePath("/utilities/statement");
+  return undefined;
 }

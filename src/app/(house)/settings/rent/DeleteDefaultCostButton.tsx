@@ -1,21 +1,30 @@
 "use client";
 
-import { useTransition } from "react";
-import { X } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { ConfirmPasswordDialog } from "@/components/ConfirmPasswordDialog";
+import { Button } from "@/components/ui/button";
 import { deleteDefaultCostCategory } from "./actions";
 
-export function DeleteDefaultCostButton({ category }: { category: string }) {
-  const [pending, startTransition] = useTransition();
-
+export function DeleteDefaultCostButton({
+  category,
+  categoryLabel,
+}: {
+  category: string;
+  categoryLabel: string;
+}) {
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() => startTransition(() => deleteDefaultCostCategory(category))}
-      className="text-muted-foreground hover:text-destructive"
-      aria-label="Delete default cost"
-    >
-      <X className="size-3.5" />
-    </button>
+    <ConfirmPasswordDialog
+      title={`Delete ${categoryLabel}`}
+      warning={`This removes the ${categoryLabel} default cost for every member. It won't affect statements already generated for past months.`}
+      confirmLabel="Delete permanently"
+      action={deleteDefaultCostCategory}
+      hiddenFields={{ category }}
+      renderTrigger={(open) => (
+        <Button size="sm" variant="outline" onClick={open}>
+          <Trash2 />
+          Delete
+        </Button>
+      )}
+    />
   );
 }
