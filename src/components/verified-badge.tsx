@@ -1,4 +1,3 @@
-import { BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type BadgeProfile = {
@@ -35,9 +34,20 @@ export function VerifiedBadge({
         : "Standard member";
 
   return (
-    <BadgeCheck
+    <svg
+      viewBox="0 0 24 24"
       aria-label={label}
       className={cn("inline size-4 shrink-0", color, className)}
-    />
+    >
+      <circle cx="12" cy="12" r="10" fill="currentColor" />
+      <path
+        d="M8 12.5l2.5 2.5L16 9"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
