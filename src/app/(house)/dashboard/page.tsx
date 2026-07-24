@@ -207,7 +207,7 @@ export default async function DashboardPage() {
 
       <div>
         <h2 className="mb-3 text-lg font-semibold text-foreground">Member meal summary</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {mealRows.map((r) => (
             <Card key={r.id} className="rounded-2xl p-5">
               <CardHeader className="px-0 pt-0 pb-2">

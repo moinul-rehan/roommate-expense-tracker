@@ -59,7 +59,7 @@ export default async function UtilityStatementPage() {
 
       <div>
         <h2 className="mb-3 text-lg font-semibold text-foreground">Member Statements</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {(members ?? []).map((m) => {
             const lines = adjustmentsByUser.get(m.id) ?? [];
             const due = dues.get(m.id) ?? { rent: 0, expenses: 0, paid: 0, due: 0 };
