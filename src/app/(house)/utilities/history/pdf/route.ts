@@ -14,6 +14,11 @@ import { UtilityHistoryPdf } from "./UtilityHistoryPdf";
 
 export async function GET() {
   const profile = await getCurrentProfile();
+
+  if (profile.role !== "super_admin" && !profile.can_add_expenses) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   const supabase = await createClient();
 
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);

@@ -46,6 +46,8 @@ export default async function UtilityHistoryPage({
   const memberDeposits = deposits.filter((d) => d.source_type === "member");
   const cottageDeposits = deposits.filter((d) => d.source_type === "addition");
 
+  const canDownloadHistory = profile.role === "super_admin" || profile.can_add_expenses;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
@@ -55,15 +57,17 @@ export default async function UtilityHistoryPage({
             Read-only record of every utility expense and deposit. No calculations happen here.
           </p>
         </div>
-        <Button
-          variant="outline"
-          nativeButton={false}
-          render={<a href="/utilities/history/pdf" download />}
-          className="shrink-0 gap-1.5"
-        >
-          <Download className="size-4" />
-          Download PDF
-        </Button>
+        {canDownloadHistory && (
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<a href="/utilities/history/pdf" download />}
+            className="shrink-0 gap-1.5"
+          >
+            <Download className="size-4" />
+            Download PDF
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-1 text-sm">
