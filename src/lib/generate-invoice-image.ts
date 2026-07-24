@@ -37,7 +37,8 @@ const AVATAR_SIZE = 64;
 const AVATAR_GAP = 14;
 const STAT_CARD_HEIGHT = 76;
 const STAT_CARD_GAP = 12;
-const TITLE_OFFSET = 12; // section title baseline -> body start
+const TITLE_TEXT_HEIGHT = 16; // line-height reserved for the 13px bold section title
+const TITLE_OFFSET = 12; // section title bottom -> body start
 const TABLE_HEADER_H = 34;
 const TABLE_ROW_H = 34;
 const TABLE_TOTAL_H = 36;
@@ -62,12 +63,15 @@ export async function generateInvoicePng(data: InvoiceData): Promise<Blob> {
     SECTION_GAP +
     1 +
     SECTION_GAP +
+    TITLE_TEXT_HEIGHT +
     TITLE_OFFSET +
     STAT_CARD_HEIGHT +
     SECTION_GAP +
+    TITLE_TEXT_HEIGHT +
     TITLE_OFFSET +
     adjustmentsHeight +
     SECTION_GAP +
+    TITLE_TEXT_HEIGHT +
     TITLE_OFFSET +
     depositsHeight +
     SECTION_GAP +
@@ -253,12 +257,16 @@ function drawAvatar(
   ctx.restore();
 }
 
+/** `y` is the exact top of the title's line box (not a text baseline), so the SECTION_GAP passed in by
+ * the caller lands as real visual whitespace instead of being partly eaten by the font's ascent. */
 function drawSectionTitle(ctx: CanvasRenderingContext2D, title: string, y: number) {
   ctx.font = `700 13px ${FONT}`;
   ctx.fillStyle = COLORS.primary;
   ctx.textAlign = "left";
+  ctx.textBaseline = "top";
   ctx.fillText(title.toUpperCase(), PADDING, y);
-  return y + TITLE_OFFSET;
+  ctx.textBaseline = "alphabetic";
+  return y + TITLE_TEXT_HEIGHT + TITLE_OFFSET;
 }
 
 function drawSummaryCards(
