@@ -4,19 +4,30 @@ import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { ShareInvoiceButton } from "./ShareInvoiceButton";
 
 type Line = { id: string; label: string; amount: number };
+
+export type InvoiceMeta = {
+  cottageName: string;
+  memberName: string;
+  email: string | null;
+  phone: string | null;
+  monthLabel: string;
+};
 
 export function UtilityBreakdownDialog({
   lines,
   assignedCost,
   paid,
   due,
+  invoiceMeta,
 }: {
   lines: Line[];
   assignedCost: number;
   paid: number;
   due: number;
+  invoiceMeta: InvoiceMeta;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -67,6 +78,18 @@ export function UtilityBreakdownDialog({
                 <span>{due < 0 ? "Advance Balance" : "Remaining Due"}</span>
                 <span>{Math.abs(due).toFixed(2)} tk</span>
               </div>
+            </div>
+
+            <div className="flex justify-end border-t pt-3">
+              <ShareInvoiceButton
+                invoice={{
+                  ...invoiceMeta,
+                  lines: lines.map((l) => ({ label: l.label, amount: l.amount })),
+                  assignedCost,
+                  paid,
+                  due,
+                }}
+              />
             </div>
           </div>
         </DialogContent>

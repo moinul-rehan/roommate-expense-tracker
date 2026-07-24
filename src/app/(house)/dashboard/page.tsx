@@ -7,6 +7,7 @@ import { getMemberMealSummary } from "@/lib/data/meal";
 import { getMyNextBazaarDuty } from "@/lib/data/bazaar-duty";
 import { UTILITY_CATEGORY_LABELS } from "@/lib/utility-categories";
 import { formatDate } from "@/lib/format-date";
+import { formatMonthKey } from "@/lib/format-month";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +59,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
-  const [dues, cottageBalance, totalUtilityExpense, { data: members }, myBazaarDuty, myAdjustmentsQuery] =
+  const [dues, cottageBalance, totalUtilityExpense, { data: members }, myBazaarDuty, myAdjustmentsQuery, { data: cottage }] =
     await Promise.all([
       getMonthlyDues(supabase, profile.cottage_id, monthKey),
       getCottageBalance(supabase, profile.cottage_id),
@@ -76,6 +77,7 @@ export default async function DashboardPage() {
         .eq("month_key", monthKey)
         .eq("user_id", profile.id)
         .order("created_at"),
+      supabase.from("cottages").select("name").eq("id", profile.cottage_id).single(),
     ]);
 
   const outstandingFromMembers = Array.from(dues.values()).reduce((sum, d) => sum + Math.max(0, d.due), 0);
@@ -152,6 +154,13 @@ export default async function DashboardPage() {
             assignedCost={myAssignedCost}
             paid={myDue.paid}
             due={myDue.due}
+            invoiceMeta={{
+              cottageName: cottage?.name ?? "Cottage",
+              memberName: getDisplayName(profile),
+              email: profile.email,
+              phone: profile.mobile_number,
+              monthLabel: formatMonthKey(monthKey),
+            }}
           />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
