@@ -9,10 +9,11 @@ import { ShareInvoiceButton } from "./ShareInvoiceButton";
 type Line = { id: string; label: string; amount: number };
 
 export type InvoiceMeta = {
-  cottageName: string;
   memberName: string;
   email: string | null;
   phone: string | null;
+  address: string | null;
+  avatarUrl: string | null;
   monthLabel: string;
 };
 
@@ -22,12 +23,16 @@ export function UtilityBreakdownDialog({
   paid,
   due,
   invoiceMeta,
+  adjustmentLines,
+  depositLines,
 }: {
   lines: Line[];
   assignedCost: number;
   paid: number;
   due: number;
   invoiceMeta: InvoiceMeta;
+  adjustmentLines: { date: string; label: string; amount: number }[];
+  depositLines: { date: string; note: string | null; amount: number }[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -84,7 +89,8 @@ export function UtilityBreakdownDialog({
               <ShareInvoiceButton
                 invoice={{
                   ...invoiceMeta,
-                  lines: lines.map((l) => ({ label: l.label, amount: l.amount })),
+                  adjustmentLines,
+                  depositLines,
                   assignedCost,
                   paid,
                   due,

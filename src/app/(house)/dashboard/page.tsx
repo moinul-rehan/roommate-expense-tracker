@@ -59,7 +59,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const monthKey = await getActiveMonthKey(supabase, profile.cottage_id);
 
-  const [dues, cottageBalance, totalUtilityExpense, { data: members }, myBazaarDuty, myAdjustmentsQuery, { data: cottage }] =
+  const [dues, cottageBalance, totalUtilityExpense, { data: members }, myBazaarDuty, myAdjustmentsQuery, myDepositsQuery] =
     await Promise.all([
       getMonthlyDues(supabase, profile.cottage_id, monthKey),
       getCottageBalance(supabase, profile.cottage_id),
@@ -72,12 +72,19 @@ export default async function DashboardPage() {
       getMyNextBazaarDuty(supabase, profile.id),
       supabase
         .from("utility_adjustments")
-        .select("id, category, amount")
+        .select("id, category, amount, created_at")
         .eq("cottage_id", profile.cottage_id)
         .eq("month_key", monthKey)
         .eq("user_id", profile.id)
         .order("created_at"),
-      supabase.from("cottages").select("name").eq("id", profile.cottage_id).single(),
+      supabase
+        .from("utility_deposits")
+        .select("id, deposit_date, amount, note")
+        .eq("cottage_id", profile.cottage_id)
+        .eq("month_key", monthKey)
+        .eq("user_id", profile.id)
+        .eq("source_type", "member")
+        .order("deposit_date", { ascending: false }),
     ]);
 
   const outstandingFromMembers = Array.from(dues.values()).reduce((sum, d) => sum + Math.max(0, d.due), 0);
@@ -88,6 +95,16 @@ export default async function DashboardPage() {
     id: a.id,
     label: UTILITY_CATEGORY_LABELS[a.category] ?? a.category,
     amount: Number(a.amount),
+  }));
+  const myAdjustmentLines = (myAdjustmentsQuery.data ?? []).map((a) => ({
+    date: a.created_at,
+    label: UTILITY_CATEGORY_LABELS[a.category] ?? a.category,
+    amount: Number(a.amount),
+  }));
+  const myDepositLines = (myDepositsQuery.data ?? []).map((d) => ({
+    date: d.deposit_date,
+    note: d.note,
+    amount: Number(d.amount),
   }));
   const { rows: mealRows, mealRate, totalBazaar, totalMeals } = await getMemberMealSummary(
     supabase,
@@ -154,11 +171,14 @@ export default async function DashboardPage() {
             assignedCost={myAssignedCost}
             paid={myDue.paid}
             due={myDue.due}
+            adjustmentLines={myAdjustmentLines}
+            depositLines={myDepositLines}
             invoiceMeta={{
-              cottageName: cottage?.name ?? "Cottage",
               memberName: getDisplayName(profile),
               email: profile.email,
               phone: profile.mobile_number,
+              address: profile.address,
+              avatarUrl: profile.avatar_url,
               monthLabel: formatMonthKey(monthKey),
             }}
           />

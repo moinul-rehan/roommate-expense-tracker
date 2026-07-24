@@ -34,7 +34,7 @@ export function ShareInvoiceButton({ invoice }: { invoice: InvoiceData }) {
         await navigator.share({
           files: [file],
           title: "Utility Statement",
-          text: `${invoice.cottageName} — Utility Statement (${invoice.monthLabel})`,
+          text: `Personal Utility Statement — ${invoice.monthLabel}`,
         });
       } else {
         downloadBlob(blob, fileName);
