@@ -31,12 +31,17 @@ const FONT = "Arial, Helvetica, sans-serif";
 const WIDTH = 720;
 const PADDING = 48;
 const CONTENT_WIDTH = WIDTH - PADDING * 2;
-const ROW_HEIGHT = 32;
+const SECTION_GAP = 16;
 const HEADER_HEIGHT = 160;
 const AVATAR_SIZE = 64;
 const AVATAR_GAP = 14;
 const STAT_CARD_HEIGHT = 76;
 const STAT_CARD_GAP = 12;
+const TITLE_OFFSET = 24; // section title baseline -> body start
+const TABLE_HEADER_H = 34;
+const TABLE_ROW_H = 34;
+const TABLE_TOTAL_H = 36;
+const CELL_PAD = 14;
 
 /** Renders a personal utility statement as a shareable PNG using the Canvas API (client-only — must run in a browser). */
 export async function generateInvoicePng(data: InvoiceData): Promise<Blob> {
@@ -45,27 +50,32 @@ export async function generateInvoicePng(data: InvoiceData): Promise<Blob> {
   const dueTint = data.due < 0 ? COLORS.greenTint : COLORS.redTint;
 
   const infoLineCount = 1 + [data.email, data.phone, data.address].filter(Boolean).length;
-  const infoBlockHeight = infoLineCount * 20;
-  const preparedForHeight = 22 + Math.max(AVATAR_SIZE, infoBlockHeight) + 30;
+  const preparedForHeight = 22 + Math.max(AVATAR_SIZE, infoLineCount * 20);
 
   const adjustmentsHeight = tableHeight(data.adjustmentLines.length);
   const depositsHeight = tableHeight(data.depositLines.length);
 
   const height =
     HEADER_HEIGHT +
-    36 + // "Prepared for" top margin
+    SECTION_GAP +
     preparedForHeight +
-    24 + // divider + margin
-    24 + // "Summary" title
+    SECTION_GAP +
+    1 +
+    SECTION_GAP +
+    TITLE_OFFSET +
     STAT_CARD_HEIGHT +
-    30 +
-    24 + // "Assigned Utilities" title
+    SECTION_GAP +
+    TITLE_OFFSET +
     adjustmentsHeight +
-    30 +
-    24 + // "Deposits" title
+    SECTION_GAP +
+    TITLE_OFFSET +
     depositsHeight +
-    30 +
-    70; // footer
+    SECTION_GAP +
+    1 +
+    SECTION_GAP +
+    18 +
+    18 +
+    SECTION_GAP;
 
   const scale = 2;
   const canvas = document.createElement("canvas");
@@ -81,19 +91,20 @@ export async function generateInvoicePng(data: InvoiceData): Promise<Blob> {
   const logo = await loadImage("/logo.png").catch(() => null);
   drawHeader(ctx, data, logo);
 
-  let y = HEADER_HEIGHT + 36;
+  let y = HEADER_HEIGHT + SECTION_GAP;
   y = await drawPreparedFor(ctx, data, y);
 
-  y += 4;
+  y += SECTION_GAP;
   drawHairline(ctx, y, COLORS.border);
-  y += 30;
+  y += SECTION_GAP;
 
   y = drawSectionTitle(ctx, "Summary", y);
   drawSummaryCards(ctx, data, dueLabel, dueColor, dueTint, y);
-  y += STAT_CARD_HEIGHT + 30;
+  y += STAT_CARD_HEIGHT;
+  y += SECTION_GAP;
 
   y = drawSectionTitle(ctx, "Assigned Utilities", y);
-  y = drawThreeColTable(
+  y = drawStripedTable(
     ctx,
     ["DATE", "CATEGORY", "AMOUNT"],
     data.adjustmentLines.map((l) => [formatShortDate(l.date), l.label, formatSigned(l.amount)]),
@@ -103,10 +114,10 @@ export async function generateInvoicePng(data: InvoiceData): Promise<Blob> {
     `${data.assignedCost.toFixed(2)} tk`,
     y
   );
-  y += 30;
+  y += SECTION_GAP;
 
   y = drawSectionTitle(ctx, "Deposits", y);
-  y = drawThreeColTable(
+  y = drawStripedTable(
     ctx,
     ["DATE", "NOTE", "AMOUNT"],
     data.depositLines.map((l) => [formatShortDate(l.date), l.note ?? "—", `${l.amount.toFixed(2)} tk`]),
@@ -116,10 +127,10 @@ export async function generateInvoicePng(data: InvoiceData): Promise<Blob> {
     `${data.paid.toFixed(2)} tk`,
     y
   );
-  y += 34;
+  y += SECTION_GAP;
 
   drawHairline(ctx, y, COLORS.border);
-  y += 26;
+  y += SECTION_GAP;
 
   ctx.font = `400 11px ${FONT}`;
   ctx.fillStyle = COLORS.muted;
@@ -129,7 +140,7 @@ export async function generateInvoicePng(data: InvoiceData): Promise<Blob> {
     WIDTH / 2,
     y
   );
-  y += 20;
+  y += 18;
   ctx.font = `400 10px ${FONT}`;
   ctx.fillText(`Generated via Cottage · ${new Date().toLocaleDateString()}`, WIDTH / 2, y);
   ctx.textAlign = "left";
@@ -141,7 +152,7 @@ export async function generateInvoicePng(data: InvoiceData): Promise<Blob> {
 
 function tableHeight(rowCount: number) {
   const rows = rowCount || 1; // "no records" placeholder still takes one row
-  return 26 + rows * ROW_HEIGHT + 8 + 1 + 34; // header + rows + gap + hairline + total row
+  return TABLE_HEADER_H + rows * TABLE_ROW_H + TABLE_TOTAL_H;
 }
 
 function drawHeader(ctx: CanvasRenderingContext2D, data: InvoiceData, logo: HTMLImageElement | null) {
@@ -205,8 +216,7 @@ async function drawPreparedFor(ctx: CanvasRenderingContext2D, data: InvoiceData,
   }
 
   const infoLineCount = 1 + [data.email, data.phone, data.address].filter(Boolean).length;
-  const infoBlockHeight = infoLineCount * 20;
-  return avatarY + Math.max(AVATAR_SIZE, infoBlockHeight);
+  return avatarY + Math.max(AVATAR_SIZE, infoLineCount * 20);
 }
 
 function drawAvatar(
@@ -248,7 +258,7 @@ function drawSectionTitle(ctx: CanvasRenderingContext2D, title: string, y: numbe
   ctx.fillStyle = COLORS.primary;
   ctx.textAlign = "left";
   ctx.fillText(title.toUpperCase(), PADDING, y);
-  return y + 24;
+  return y + TITLE_OFFSET;
 }
 
 function drawSummaryCards(
@@ -283,7 +293,8 @@ function drawSummaryCards(
   });
 }
 
-function drawThreeColTable(
+/** A banded table: solid brand-color header bar, alternating white/tint row stripes, and a solid brand-color total bar. */
+function drawStripedTable(
   ctx: CanvasRenderingContext2D,
   headers: [string, string, string],
   rows: string[][],
@@ -293,57 +304,69 @@ function drawThreeColTable(
   totalValue: string,
   startY: number
 ): number {
-  const dateColX = PADDING;
-  const midColX = PADDING + 90;
-  const amountColRight = WIDTH - PADDING;
-  const midColMaxWidth = amountColRight - 130 - midColX;
+  const dateColX = PADDING + CELL_PAD;
+  const midColX = PADDING + 80 + CELL_PAD;
+  const amountColRight = WIDTH - PADDING - CELL_PAD;
+  const midColMaxWidth = amountColRight - 100 - midColX;
 
   let y = startY;
-  ctx.font = `700 12px ${FONT}`;
+
   ctx.fillStyle = COLORS.primary;
+  ctx.fillRect(PADDING, y, CONTENT_WIDTH, TABLE_HEADER_H);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 12px ${FONT}`;
   ctx.textAlign = "left";
-  ctx.fillText(headers[0], dateColX, y);
-  ctx.fillText(headers[1], midColX, y);
+  const headerTextY = y + TABLE_HEADER_H / 2 + 4;
+  ctx.fillText(headers[0], dateColX, headerTextY);
+  ctx.fillText(headers[1], midColX, headerTextY);
   ctx.textAlign = "right";
-  ctx.fillText(headers[2], amountColRight, y);
+  ctx.fillText(headers[2], amountColRight, headerTextY);
   ctx.textAlign = "left";
-  y += 26;
+  y += TABLE_HEADER_H;
 
   if (!rows.length) {
-    ctx.font = `400 14px ${FONT}`;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(PADDING, y, CONTENT_WIDTH, TABLE_ROW_H);
+    ctx.font = `400 13px ${FONT}`;
     ctx.fillStyle = COLORS.muted;
-    ctx.fillText(emptyText, dateColX, y);
-    y += ROW_HEIGHT;
+    ctx.fillText(emptyText, dateColX, y + TABLE_ROW_H / 2 + 4);
+    y += TABLE_ROW_H;
   } else {
     rows.forEach((row, i) => {
-      ctx.font = `400 13px ${FONT}`;
+      ctx.fillStyle = i % 2 === 0 ? "#ffffff" : COLORS.primaryTint;
+      ctx.fillRect(PADDING, y, CONTENT_WIDTH, TABLE_ROW_H);
+
+      const rowTextY = y + TABLE_ROW_H / 2 + 4;
+      ctx.font = `400 12px ${FONT}`;
       ctx.fillStyle = COLORS.muted;
-      ctx.fillText(row[0], dateColX, y);
+      ctx.textAlign = "left";
+      ctx.fillText(row[0], dateColX, rowTextY);
 
-      ctx.font = `500 14px ${FONT}`;
+      ctx.font = `500 13px ${FONT}`;
       ctx.fillStyle = COLORS.foreground;
-      ctx.fillText(truncateText(ctx, row[1], midColMaxWidth), midColX, y);
+      ctx.fillText(truncateText(ctx, row[1], midColMaxWidth), midColX, rowTextY);
 
-      ctx.font = `600 14px ${FONT}`;
+      ctx.font = `600 13px ${FONT}`;
       ctx.fillStyle = amountColors[i] ?? COLORS.foreground;
       ctx.textAlign = "right";
-      ctx.fillText(row[2], amountColRight, y);
+      ctx.fillText(row[2], amountColRight, rowTextY);
       ctx.textAlign = "left";
 
-      y += ROW_HEIGHT;
+      y += TABLE_ROW_H;
     });
   }
 
-  y += 8;
-  drawHairline(ctx, y, COLORS.foreground);
-  y += 26;
-
-  ctx.font = `700 15px ${FONT}`;
-  ctx.fillStyle = COLORS.foreground;
-  ctx.fillText(totalLabel, dateColX, y);
-  ctx.textAlign = "right";
-  ctx.fillText(totalValue, amountColRight, y);
+  ctx.fillStyle = COLORS.primary;
+  ctx.fillRect(PADDING, y, CONTENT_WIDTH, TABLE_TOTAL_H);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 14px ${FONT}`;
+  const totalTextY = y + TABLE_TOTAL_H / 2 + 5;
   ctx.textAlign = "left";
+  ctx.fillText(totalLabel, dateColX, totalTextY);
+  ctx.textAlign = "right";
+  ctx.fillText(totalValue, amountColRight, totalTextY);
+  ctx.textAlign = "left";
+  y += TABLE_TOTAL_H;
 
   return y;
 }

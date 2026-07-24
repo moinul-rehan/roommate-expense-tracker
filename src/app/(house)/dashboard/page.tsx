@@ -1,5 +1,5 @@
 import { Wallet, Receipt, HandCoins, UtensilsCrossed, ShoppingBasket } from "lucide-react";
-import { getDisplayName, getCurrentProfile } from "@/lib/data/dal";
+import { getDisplayName, getFullName, getCurrentProfile } from "@/lib/data/dal";
 import { createClient } from "@/lib/supabase/server";
 import { getCottageBalance, getMonthlyDues, getMonthlyExpenseTotal } from "@/lib/data/finance";
 import { getActiveMonthKey } from "@/lib/data/months";
@@ -174,7 +174,7 @@ export default async function DashboardPage() {
             adjustmentLines={myAdjustmentLines}
             depositLines={myDepositLines}
             invoiceMeta={{
-              memberName: getDisplayName(profile),
+              memberName: getFullName(profile) || getDisplayName(profile),
               email: profile.email,
               phone: profile.mobile_number,
               address: profile.address,
