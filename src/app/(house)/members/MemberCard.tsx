@@ -93,7 +93,7 @@ export function MemberCard({
               {member.role === "super_admin"
                 ? "Super admin"
                 : hasElevatedAccess(member)
-                  ? "Admin"
+                  ? "Manager"
                   : "Member"}
               {member.room_label ? ` · ${member.room_label}` : ""}
             </span>
