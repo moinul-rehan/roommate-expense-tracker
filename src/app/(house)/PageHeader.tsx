@@ -14,6 +14,7 @@ type Profile = {
   can_add_expenses: boolean;
   can_add_bazaar: boolean;
   can_add_meals: boolean;
+  can_add_deposit: boolean;
 };
 
 type Notification = {
@@ -70,6 +71,7 @@ export function PageHeader({
                 can_add_expenses={profile.can_add_expenses}
                 can_add_bazaar={profile.can_add_bazaar}
                 can_add_meals={profile.can_add_meals}
+                can_add_deposit={profile.can_add_deposit}
               />
             </span>
             <span className="truncate text-sm text-muted-foreground">

@@ -5,10 +5,26 @@ type BadgeProfile = {
   can_add_expenses?: boolean;
   can_add_bazaar?: boolean;
   can_add_meals?: boolean;
+  can_add_deposit?: boolean;
 };
 
+/** Whether a member (not the super admin) has been granted any admin-style permission. */
+export function hasElevatedAccess(permissions: {
+  can_add_expenses?: boolean;
+  can_add_bazaar?: boolean;
+  can_add_meals?: boolean;
+  can_add_deposit?: boolean;
+}) {
+  return Boolean(
+    permissions.can_add_expenses ||
+      permissions.can_add_bazaar ||
+      permissions.can_add_meals ||
+      permissions.can_add_deposit
+  );
+}
+
 /**
- * Gold = Admin, Blue = member with any granted permission, Black = standard member.
+ * Gold = Super admin, Blue = member granted admin permissions, Black = standard member.
  * Accepts either a role string (defaults to standard-member colors) or a full profile.
  */
 export function VerifiedBadge({
@@ -16,8 +32,7 @@ export function VerifiedBadge({
   className,
   ...permissions
 }: BadgeProfile & { className?: string }) {
-  const hasPermission =
-    permissions.can_add_expenses || permissions.can_add_bazaar || permissions.can_add_meals;
+  const hasPermission = hasElevatedAccess(permissions);
 
   const color =
     role === "super_admin"
@@ -28,9 +43,9 @@ export function VerifiedBadge({
 
   const label =
     role === "super_admin"
-      ? "Admin"
+      ? "Super admin"
       : hasPermission
-        ? "Member with permissions"
+        ? "Admin"
         : "Standard member";
 
   return (

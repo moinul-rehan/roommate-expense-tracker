@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmPasswordDialog } from "@/components/ConfirmPasswordDialog";
 import { getDisplayName } from "@/lib/data/display-name";
-import { VerifiedBadge } from "@/components/verified-badge";
+import { VerifiedBadge, hasElevatedAccess } from "@/components/verified-badge";
 
 type Member = {
   id: string;
@@ -86,10 +86,15 @@ export function MemberCard({
                 can_add_expenses={member.can_add_expenses}
                 can_add_bazaar={member.can_add_bazaar}
                 can_add_meals={member.can_add_meals}
+                can_add_deposit={member.can_add_deposit}
               />
             </span>
             <span className="text-xs text-muted-foreground">
-              {member.role === "super_admin" ? "Super admin" : "Member"}
+              {member.role === "super_admin"
+                ? "Super admin"
+                : hasElevatedAccess(member)
+                  ? "Admin"
+                  : "Member"}
               {member.room_label ? ` · ${member.room_label}` : ""}
             </span>
           </div>
