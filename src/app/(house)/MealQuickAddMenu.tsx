@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Plus, Wallet, ShoppingBasket, CalendarDays } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { BazaarForm } from "./meal/BazaarForm";
 import { DailyMealForm } from "./meal/DailyMealForm";
 import { DepositForm } from "./meal/DepositForm";
+import { cn } from "@/lib/utils";
 
 type Member = { id: string; first_name: string; last_name: string | null };
 
@@ -26,10 +28,24 @@ export function MealQuickAddMenu({
 }) {
   const [open, setOpen] = useState<"meal" | "deposit" | "bazaar" | null>(null);
   const { setOpenMobile } = useSidebar();
+  const pathname = usePathname();
 
   function openDialog(dialog: "meal" | "deposit" | "bazaar") {
     setOpenMobile(false);
     setOpen(dialog);
+  }
+
+  function isActive(href: string) {
+    return pathname === href;
+  }
+
+  function itemClass(href?: string) {
+    return cn(
+      "gap-3 rounded-full px-3 py-2.5",
+      href && isActive(href)
+        ? "bg-accent font-semibold text-accent-foreground hover:bg-accent hover:text-accent-foreground"
+        : "font-normal text-sidebar-foreground"
+    );
   }
 
   return (
@@ -38,7 +54,8 @@ export function MealQuickAddMenu({
         <SidebarMenuButton
           render={<Link href="/meal/month-details" onClick={() => setOpenMobile(false)} />}
           tooltip="Month Details"
-          className="gap-3 rounded-full px-3 py-2.5 font-normal text-sidebar-foreground"
+          isActive={isActive("/meal/month-details")}
+          className={itemClass("/meal/month-details")}
         >
           <CalendarDays />
           Month Details
@@ -46,11 +63,7 @@ export function MealQuickAddMenu({
       </SidebarMenuItem>
       {canAddMeals && (
         <SidebarMenuItem>
-          <SidebarMenuButton
-            onClick={() => openDialog("meal")}
-            tooltip="Add Meal"
-            className="gap-3 rounded-full px-3 py-2.5 font-normal text-sidebar-foreground"
-          >
+          <SidebarMenuButton onClick={() => openDialog("meal")} tooltip="Add Meal" className={itemClass()}>
             <Plus />
             Add Meal
           </SidebarMenuButton>
@@ -58,11 +71,7 @@ export function MealQuickAddMenu({
       )}
       {canAddDeposit && (
         <SidebarMenuItem>
-          <SidebarMenuButton
-            onClick={() => openDialog("deposit")}
-            tooltip="Add Meal Deposit"
-            className="gap-3 rounded-full px-3 py-2.5 font-normal text-sidebar-foreground"
-          >
+          <SidebarMenuButton onClick={() => openDialog("deposit")} tooltip="Add Meal Deposit" className={itemClass()}>
             <Wallet />
             Add Meal Deposit
           </SidebarMenuButton>
@@ -70,11 +79,7 @@ export function MealQuickAddMenu({
       )}
       {canAddBazaar && (
         <SidebarMenuItem>
-          <SidebarMenuButton
-            onClick={() => openDialog("bazaar")}
-            tooltip="Add Meal Cost"
-            className="gap-3 rounded-full px-3 py-2.5 font-normal text-sidebar-foreground"
-          >
+          <SidebarMenuButton onClick={() => openDialog("bazaar")} tooltip="Add Meal Cost" className={itemClass()}>
             <ShoppingBasket />
             Add Meal Cost
           </SidebarMenuButton>
