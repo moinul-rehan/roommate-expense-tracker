@@ -83,6 +83,48 @@
   --sidebar-ring: #DE7356;
 }
 
+/*
+ * Dark theme. Every pair actually used to render text (background/foreground,
+ * card, muted-foreground, primary-as-link-or-icon, destructive-as-error-text)
+ * is chosen to clear WCAG AAA (7:1 for normal text) against every background
+ * it appears on in this app — verified via the WCAG relative-luminance
+ * formula, not eyeballed. Borders/rings/chart fills are decorative, not text,
+ * so they follow the same visual structure without that literal 7:1 bar.
+ */
+.dark {
+  --background: #121316;
+  --foreground: #F5F6F7;
+  --card: #1B1D22;
+  --card-foreground: #F5F6F7;
+  --popover: #1B1D22;
+  --popover-foreground: #F5F6F7;
+  --primary: #FF9270;
+  --primary-foreground: #1B1000;
+  --secondary: #21242B;
+  --secondary-foreground: #F5F6F7;
+  --muted: #262930;
+  --muted-foreground: #B5BAC3;
+  --accent: #2A2118;
+  --accent-foreground: #FF9270;
+  --destructive: #FF8686;
+  --border: #33363D;
+  --input: #33363D;
+  --ring: #FF9270;
+  --chart-1: #FF9270;
+  --chart-2: #7BD164;
+  --chart-3: #FFA85C;
+  --chart-4: #8B909A;
+  --chart-5: #C5CAD3;
+  --sidebar: #1B1D22;
+  --sidebar-foreground: #C7CBD3;
+  --sidebar-primary: #FF9270;
+  --sidebar-primary-foreground: #1B1000;
+  --sidebar-accent: #2A2118;
+  --sidebar-accent-foreground: #FF9270;
+  --sidebar-border: #33363D;
+  --sidebar-ring: #FF9270;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

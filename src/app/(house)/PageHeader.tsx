@@ -5,6 +5,7 @@ import { MobileSidebarTrigger } from "./MobileSidebarTrigger";
 import { NotificationTray } from "./NotificationTray";
 import { ProfileMenu } from "./ProfileMenu";
 import { VerifiedBadge } from "@/components/verified-badge";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type Profile = {
@@ -52,6 +53,7 @@ export function PageHeader({
           <MobileSidebarTrigger />
           {isDashboard && (
             <div className="flex shrink-0 items-center gap-2.5">
+              <ThemeToggle />
               <NotificationTray notifications={notifications} unreadCount={unreadCount} />
               <ProfileMenu
                 name={displayName}
@@ -83,6 +85,7 @@ export function PageHeader({
 
       {isDashboard && (
         <div className="hidden shrink-0 items-center gap-2.5 sm:flex">
+          <ThemeToggle />
           <NotificationTray notifications={notifications} unreadCount={unreadCount} />
           <ProfileMenu
             name={displayName}

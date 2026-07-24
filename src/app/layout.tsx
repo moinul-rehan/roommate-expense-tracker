@@ -29,7 +29,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#DE7356",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#DE7356" },
+    { media: "(prefers-color-scheme: dark)", color: "#121316" },
+  ],
 };
 
 export default function RootLayout({
@@ -38,7 +41,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} h-full antialiased`}>
+    <html lang="en" className={`${poppins.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script
+          // Runs before hydration so the correct theme is on <html> for the very first paint —
+          // otherwise the page would flash light before React mounts and corrects it.
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");if(!t){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(t==="dark")document.documentElement.classList.add("dark")}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         {children}
         <InstallPrompt />
